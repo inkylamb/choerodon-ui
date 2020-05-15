@@ -119,5 +119,5 @@ export const getWidth = elem => {
 export const setStyle = (elem, styleProperty, value) => {
   if (elem && typeof elem.style === 'object') {
     elem.style[styleProperty] = value;
-  }
+  } 
 };

@@ -282,6 +282,12 @@ export default class Cascader extends Component {
     // Did not show popup when there is no options
     let menus = <div />;
     let emptyMenuClassName = '';
+    console.log(
+      this.props,
+      this.state.value,
+      this.state.activeValue,
+      this.state.popupVisible,
+    )
     if (options && options.length > 0) {
       menus = (
         <Menus
