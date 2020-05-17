@@ -45,9 +45,9 @@ class App extends React.Component {
     fields: [
       {
         name: 'user',
-        type: 'string',
+        type: 'object',
         textField: 'text',
-        valueField: 'id',
+        valueField: 'text',
         label: '部门',
         options: this.optionDs,
       },

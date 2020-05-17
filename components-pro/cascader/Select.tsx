@@ -8,7 +8,7 @@
 // import noop from 'lodash/noop';
 // import isPlainObject from 'lodash/isPlainObject';
 // import { observer } from 'mobx-react';
-// import { action, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
+// import { action, observable, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
 // import { Menus  } from 'choerodon-ui/lib/rc-components/cascader';
 // import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 // import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
@@ -31,6 +31,7 @@
 // import isSameLike from '../_util/isSameLike';
 // import { Renderer } from '../field/FormField';
 // import Item from 'choerodon-ui/lib/list/Item';
+// import arrayTreeFilter from 'array-tree-filter';
 
 // function updateActiveKey(menu: Menu, activeKey: string) {
 //   const store = menu.getStore();
@@ -207,6 +208,24 @@
 //   comboOptions: DataSet = new DataSet();
 
 //   menu?: Menu | null;
+
+//   @observable activeValues 
+
+//   @computed
+//   get activeValue(): any {
+//     return this.activeValues;
+//   }
+
+//   constructor(props, context) {
+//     super(props, context);
+//     this.setActiveValue([])
+//   }
+
+//   @action
+//   setActiveValue(activeValues:any) {
+//     this.activeValues = activeValues;
+//   }
+
 
 //   @computed
 //   get searchMatcher(): SearchMatcher {
@@ -452,6 +471,26 @@
 //     return getConfig('renderEmpty')('Select');
 //   }
 
+//   findParentRecodTree(record:Record,fn?:any){
+//       const recordTree:any[] = []
+//       if(record){
+//         if(fn instanceof Function){
+//           recordTree.push(fn(record))
+//         }else{
+//           recordTree.push(record)
+//         }
+//       }
+//       if(record.parent){
+//         if(fn instanceof Function){
+//           this.findParentRecodTree(record.parent,fn)
+//         }else{
+//           this.findParentRecodTree(record.parent)
+//         }
+        
+//       }
+//       return recordTree
+//   }
+
 //   @autobind
 //   getMenu(menuProps: object = {}): ReactNode {
 //     // 暂时不用考虑分组情况 groups
@@ -466,49 +505,41 @@
 //     }
 //     const menuDisabled = this.isDisabled();
 //     let optGroups: any[] = [];
-//     const selectedKeys: Key[] = [];
-//     this.filteredOptions.forEach(record => {
-
+//     let selectedValues: any[] = [];
 //     function treePropsChange(treeRecord:Record[]){
-//       let treeRecords:any = []
-//       if(treeRecord.length > 0){
-//         treeRecords = treeRecord.map(recordItem => {
-//           const value = recordItem.get(valueField);
-//           const text = recordItem.get(textField);
-//           const key: Key = getItemKey(recordItem, text, value);
-//           const optionProps = onOption({ dataSet: options, record: recordItem });
-//           const optionDisabled = menuDisabled || (optionProps && optionProps.disabled);
-//           let children
-//           // 被选中的Keys
-//           if (recordItem.isSelected) {
-//             selectedKeys.push(key);   
-//           }
-//           if(recordItem.children){
-//             children = treePropsChange(recordItem.children)
-//           }
-//           return (children ? {
-//             key,
-//             label:text,
-//             value:record,
-//             disabled: optionDisabled,
-//             children,
-//           }:{
-//             key,
-//             label:text,
-//             value:record,
-//             disabled: optionDisabled,
+//         let treeRecords:any = []
+//         if(treeRecord.length > 0){
+//           treeRecords = treeRecord.map(recordItem => {
+//             const value = recordItem.get(valueField);
+//             const text = recordItem.get(textField);
+//             const key: Key = getItemKey(recordItem, text, value);
+//             const optionProps = onOption({ dataSet: options, record: recordItem });
+//             const optionDisabled = menuDisabled || (optionProps && optionProps.disabled);
+//             let children
+//             if (recordItem.isSelected) {
+//               selectedValues.push(recordItem);   
+//             }
+//             if(recordItem.children){
+//               children = treePropsChange(recordItem.children)
+//             }
+//             return (children ? {
+//               key,
+//               label:text,
+//               value:recordItem,
+//               disabled: optionDisabled,
+//               children,
+//             }:{
+//               key,
+//               label:text,
+//               value:recordItem,
+//               disabled: optionDisabled,
+//             })
 //           })
-//         })
-//       }
-//       return treeRecords
-//      }
-//      optGroups = treePropsChange(options.treeData)
-      
-//     });  
-
-//     console.log(optGroups)
-
-    
+//         }
+//         return treeRecords
+//        }
+//        optGroups = treePropsChange(options.treeData)
+//     selectedValues = this.findParentRecodTree(this.activeValue)
 //     return options && options.length > 0 ? (
 //       <Menus
 //           {...menuProps}
@@ -516,7 +547,7 @@
 //           ref={this.saveMenu} 
 //           // disabled={menuDisabled}
 //           // value={this.state.value}
-//           activeValue={['item-2-组织架构','item-7-员工管理(react)']}
+//           activeValue={selectedValues}
 //           options={optGroups}
 //           onSelect={this.handleMenuClick}
 //           style={dropdownMenuStyle}
@@ -528,6 +559,9 @@
 //       </div>
 //     )
 //   }
+
+//    // 遍历出父亲节点
+
 
   
 
@@ -589,9 +623,9 @@
 //           case KeyCode.PAGE_UP:
 //             this.handleKeyDownFirstLast(e, menu, -1);
 //             break;
-//           // case KeyCode.ENTER:
-//           //   this.handleKeyDownEnter(e);
-//           //   break;
+//         //   case KeyCode.ENTER:
+//         //     this.handleKeyDownEnter(e);
+//         //     break;
 //           case KeyCode.ESC:
 //             this.handleKeyDownEsc(e);
 //             break;
@@ -633,8 +667,8 @@
 //     }
 //   }
 
-//   // handleKeyDownEnter(_e) {
-//   // }
+// //   handleKeyDownEnter(_e) {
+// //   }
 
 //   handleKeyDownEsc(e) {
 //     if (this.popup) {
@@ -793,15 +827,23 @@
 //   handlePopupAnimateEnd(_key, _exists) {}
 
 //   @autobind
-//   handleMenuClick({
-//     value,
-//   }) {
-//     debugger
-//     if (this.multiple && this.isSelected(value)) {
-//       this.unChoose(value);
-//     } else {
-//       this.choose(value);
+//   handleMenuClick(targetOption, menuIndex, e) {
+
+//     if (!targetOption || targetOption.disabled) {
+//       return;
 //     }
+//     if(!(this.isSelected(targetOption.value) && this.multiple)){
+//       if (targetOption.children ) {
+//         this.setPopup(true);
+//         this.setActiveValue(targetOption.value);
+//       }else {
+//         this.choose(targetOption.value);
+//         this.setActiveValue(targetOption.value);
+//       }
+//     }else{
+//       this.unChoose(targetOption.value);
+//     }
+    
 //   }
 
 //   @autobind
@@ -815,10 +857,14 @@
 //     if (!targetOption || targetOption.disabled) {
 //       return;
 //     }
+
+
+
 //     let { activeValue } = this.state;
 //     activeValue = activeValue.slice(0, menuIndex + 1);
 //     activeValue[menuIndex] = targetOption.value;
 //     const activeOptions = this.getActiveOptions(activeValue);
+
 //     if (targetOption.isLeaf === false && !targetOption.children && loadData) {
 //       if (changeOnSelect) {
 //         this.handleChange(activeOptions, { visible: true }, e);
@@ -851,8 +897,6 @@
 //   };
 
 //   handleOptionSelect(record: Record) {
-//     console.log(this.processRecordToObject(record))
-//     debugger
 //     this.prepareSetValue(this.processRecordToObject(record));
 //   }
 
@@ -864,7 +908,6 @@
 
 //   @action
 //   setText(text?: string): void {
-//     debugger
 //     super.setText(text);
 //     if (this.searchable && isString(this.searchMatcher)) {
 //       this.doSearch(text);
@@ -884,7 +927,6 @@
 //   @action
 //   handleChange(e) {
 //     const { value } = e.target;
-//     debugger
 //     this.setText(value);
 //     if (this.observableProps.combo) {
 //       this.generateComboOption(value, text => this.setText(text));
@@ -896,8 +938,25 @@
 
 //   processRecordToObject(record: Record) {
 //     const { primitive, valueField } = this;
-//     debugger
-//     return primitive ? record.get(valueField) : record.toData();
+//     if(record && record.dataSet!.getFromTree(0)){
+//       return this.treeValueToArray(record)
+//     }
+//     const result =  primitive ? record.get(valueField) : record.toData();
+//     return result
+//   }
+
+//   treeValueToArray(record:Record,allArray?:string[]){
+//     const { valueField } = this;
+//     if(!allArray){
+//       allArray = []
+//     }
+//     if(record){
+//       allArray = [...allArray,record.get(valueField)]
+//     }
+//     if(record.parent){
+//       return this.treeValueToArray(record.parent,allArray)
+//     }
+//     return allArray
 //   }
 
 //   processObjectValue(value, textField) {
@@ -919,9 +978,13 @@
 //     }
 //     return super.processValue(this.processObjectValue(value, textField));
 //   }
-
+  
+//   // 处理value
 //   processValue(value: any): string {
 //     const text = this.processLookupValue(value);
+//     if(value instanceof Array){
+//       return value.join('/')
+//     }
 //     if (isEmpty(text)) {
 //       if (isPlainObject(value)) {
 //         return ObjectChainValue.get(value, this.valueField) || '';
@@ -930,6 +993,14 @@
 //     }
 //     return text;
 //   }
+
+//   toValueString(value: any): string | undefined {
+//     if (value instanceof Array) {
+//       return value.join('/');
+//     }
+//     return value;
+//   }
+  
 
 //   @action
 //   clear() {
