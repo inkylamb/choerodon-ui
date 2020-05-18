@@ -1,5 +1,5 @@
 // import React, { CSSProperties, isValidElement, Key, ReactElement, ReactNode } from 'react';
-// import PropTypes from 'prop-types';
+// import PropTypes, { element } from 'prop-types';
 // import omit from 'lodash/omit';
 // import debounce from 'lodash/debounce';
 // import isString from 'lodash/isString';
@@ -8,7 +8,7 @@
 // import noop from 'lodash/noop';
 // import isPlainObject from 'lodash/isPlainObject';
 // import { observer } from 'mobx-react';
-// import { action, observable, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
+// import { action, observable, toJS, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
 // import { Menus  } from 'choerodon-ui/lib/rc-components/cascader';
 // import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 // import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
@@ -16,8 +16,6 @@
 // import TriggerField, { TriggerFieldProps } from '../trigger-field/TriggerField';
 // import autobind from '../_util/autobind';
 // import { ValidationMessages } from '../validator/Validator';
-// import Option, { OptionProps } from '../option/Option';
-// import OptGroup from '../option/OptGroup';
 // import { DataSetStatus, FieldType } from '../data-set/enum';
 // import DataSet from '../data-set/DataSet';
 // import Record from '../data-set/Record';
@@ -32,6 +30,7 @@
 // import { Renderer } from '../field/FormField';
 // import Item from 'choerodon-ui/lib/list/Item';
 // import arrayTreeFilter from 'array-tree-filter';
+// import { OptionProps } from '../option/Option';
 
 // function updateActiveKey(menu: Menu, activeKey: string) {
 //   const store = menu.getStore();
@@ -201,10 +200,6 @@
 //     onOption: defaultOnOption,
 //   };
 
-//   static Option = Option;
-
-//   static OptGroup = OptGroup;
-
 //   comboOptions: DataSet = new DataSet();
 
 //   menu?: Menu | null;
@@ -218,7 +213,7 @@
 
 //   constructor(props, context) {
 //     super(props, context);
-//     this.setActiveValue([])
+//     this.setActiveValue({})
 //   }
 
 //   @action
@@ -237,7 +232,7 @@
 //   get defaultValidationMessages(): ValidationMessages {
 //     const label = this.getProp('label');
 //     return {
-//       valueMissing: $l('Select', label ? 'value_missing' : 'value_missing_no_label', { label }),
+//       valueMissing: $l('Cascader', label ? 'value_missing' : 'value_missing_no_label', { label }),
 //     };
 //   }
 
@@ -482,11 +477,9 @@
 //       }
 //       if(record.parent){
 //         if(fn instanceof Function){
-//           this.findParentRecodTree(record.parent,fn)
-//         }else{
-//           this.findParentRecodTree(record.parent)
+//         return [...this.findParentRecodTree(record.parent,fn),...recordTree]
 //         }
-        
+//         return [...this.findParentRecodTree(record.parent),...recordTree]
 //       }
 //       return recordTree
 //   }
@@ -498,7 +491,7 @@
 //       options,
 //       textField,
 //       valueField,
-//       props: { dropdownMenuStyle, optionRenderer, onOption },
+//       props: { dropdownMenuStyle, onOption },
 //     } = this;
 //     if (!options) {
 //       return null;
@@ -540,6 +533,7 @@
 //        }
 //        optGroups = treePropsChange(options.treeData)
 //     selectedValues = this.findParentRecodTree(this.activeValue)
+//     console.log(selectedValues)
 //     return options && options.length > 0 ? (
 //       <Menus
 //           {...menuProps}
@@ -586,7 +580,6 @@
 //         menu,
 //       ];
 //     }
-
 //     return menu;
 //   }
 
@@ -601,64 +594,130 @@
 
 //   @autobind
 //   handleKeyDown(e) {
-//     const { menu } = this;
-//     if (!this.isDisabled() && !this.isReadOnly() && menu) {
-//       if (this.popup && menu.onKeyDown(e)) {
-//         stopEvent(e);
-//       } else {
-//         switch (e.keyCode) {
-//           case KeyCode.RIGHT:
-//           case KeyCode.DOWN:
-//             this.handleKeyDownPrevNext(e, menu, 1);
-//             break;
-//           case KeyCode.LEFT:
-//           case KeyCode.UP:
-//             this.handleKeyDownPrevNext(e, menu, -1);
-//             break;
-//           case KeyCode.END:
-//           case KeyCode.PAGE_DOWN:
-//             this.handleKeyDownFirstLast(e, menu, 1);
-//             break;
-//           case KeyCode.HOME:
-//           case KeyCode.PAGE_UP:
-//             this.handleKeyDownFirstLast(e, menu, -1);
-//             break;
-//         //   case KeyCode.ENTER:
-//         //     this.handleKeyDownEnter(e);
-//         //     break;
-//           case KeyCode.ESC:
-//             this.handleKeyDownEsc(e);
-//             break;
-//           case KeyCode.SPACE:
-//             this.handleKeyDownSpace(e);
-//             break;
-//           default:
-//         }
+//     if (!this.isDisabled() && !this.isReadOnly()) {
+//       switch (e.keyCode) {
+//         case KeyCode.RIGHT:
+//           this.handleKeyLeftRightNext(e,1)
+//           break
+//         case KeyCode.DOWN:
+//           this.handleKeyDownPrevNext(e, 1);
+//           break;
+//         case KeyCode.LEFT:
+//           this.handleKeyLeftRightNext(e,-1)
+//           break;
+//         case KeyCode.UP:
+//           this.handleKeyDownPrevNext(e, -1);
+//           break;
+//         case KeyCode.END:
+//         case KeyCode.PAGE_DOWN:
+//           this.handleKeyDownFirstLast(e, 1);
+//           break;
+//         case KeyCode.HOME:
+//         case KeyCode.PAGE_UP:
+//           this.handleKeyDownFirstLast(e, -1);
+//           break;
+//       //   case KeyCode.ENTER:
+//       //     this.handleKeyDownEnter(e);
+//       //     break;
+//         case KeyCode.ESC:
+//           this.handleKeyDownEsc(e);
+//           break;
+//         case KeyCode.SPACE:
+//           this.handleKeyDownSpace(e);
+//           break;
+//         default:
 //       }
 //     }
 //     super.handleKeyDown(e);
 //   }
 
-//   handleKeyDownFirstLast(e, menu: Menu, direction: number) {
+//   // 获取当前列第一个值和最后的值
+//    findTreeDataFirstLast(options,activeValue,direction){
+//     const nowIndexList = activeValue.parent ? activeValue.parent.children : options
+//      if(nowIndexList.length > 0 && direction > 0){
+//        return nowIndexList[nowIndexList.length-1]
+//      } 
+//      if(nowIndexList.length > 0 && direction < 0){
+//       return nowIndexList[0]
+//      }
+//      return activeValue
+//    }
+
+//   handleKeyDownFirstLast(e, direction: number) {
 //     stopEvent(e);
-//     const children = menu.getFlatInstanceArray();
-//     const activeItem = children[direction < 0 ? 0 : children.length - 1];
-//     if (activeItem) {
-//       if (!this.editable || this.popup) {
-//         updateActiveKey(menu, activeItem.props.eventKey);
-//       }
-//       if (!this.editable && !this.popup) {
-//         this.choose(activeItem.props.value);
+//     if(this.options instanceof DataSet){
+//       if(isEmpty(toJS(this.activeValue))){
+//         this.setActiveValue(this.options.treeData[0])
+//       }else{
+//         const activeItem = this.findTreeDataFirstLast(this.options.treeData,this.activeValue,direction)
+//         if (!this.editable || this.popup) {
+//           this.setActiveValue(activeItem);
+//         }
 //       }
 //     }
 //   }
 
-//   handleKeyDownPrevNext(e, menu: Menu, direction: number) {
+//   // 查找同级位置 
+//   findTreeDataUpDown(options,value,direction,fn?:any){
+//     const nowIndexList = value.parent ? value.parent.children : options
+//     if(nowIndexList instanceof Array){
+//       const nowIndex = fn !== undefined ? fn : nowIndexList.findIndex( ele => ele.value === value )
+//       const length = nowIndexList.length
+//       if(nowIndex+direction >= length){
+//         return nowIndexList[0]
+//       }
+//       if(nowIndex+direction < 0){
+//         return nowIndexList[length-1]
+//       }
+//       return nowIndexList[nowIndex+direction]
+//     }
+//     return value
+//   }
+
+//   sameKeyRecordIndex(options:Record[],activeValue:Record){
+//     const nowIndexList = activeValue.parent ? activeValue.parent.children : options;
+//     return nowIndexList!.findIndex(ele => ele.key=== activeValue.key)
+//   }
+
+//   handleKeyDownPrevNext(e, direction: number) {
 //     if (!this.multiple && !this.editable) {
-//       const activeItem = menu.step(direction);
-//       if (activeItem) {
-//         updateActiveKey(menu, activeItem.props.eventKey);
-//         this.choose(activeItem.props.value);
+//       if(this.options instanceof DataSet){
+//         if(isEmpty(toJS(this.activeValue))){
+//           this.setActiveValue(this.options.treeData[0])
+//         }else{
+//           const {activeValue} = this 
+//           this.setActiveValue(this.findTreeDataUpDown(this.options.treeData,this.activeValue,direction,this.sameKeyRecordIndex(this.options.treeData,activeValue)));
+//         }
+//       }
+//       e.preventDefault();
+//     } else if (e === KeyCode.DOWN) {
+//       this.expand();
+//       e.preventDefault();
+//     }
+//   }
+
+//   // 查找相邻的节点
+//   findTreeParentChidren(options,activeValue,direction){
+//     if(direction > 0){
+//       if(activeValue.children.length > 0){
+//         return activeValue.children[0]
+//       }
+//     }else if(activeValue.parent){
+//         return activeValue.parent
+//     }
+//     return activeValue
+//   }
+
+
+
+//   handleKeyLeftRightNext(e, direction: number) {
+//      if (!this.multiple && !this.editable) {
+//       if(this.options instanceof DataSet){
+//         if(isEmpty(toJS(this.activeValue))){
+//           this.setActiveValue(this.options.treeData[0])
+//         }else{
+//           this.setActiveValue(this.findTreeParentChidren(this.options.treeData,this.activeValue,direction));
+//         }
 //       }
 //       e.preventDefault();
 //     } else if (e === KeyCode.DOWN) {
@@ -825,7 +884,8 @@
 
 //   @autobind
 //   handlePopupAnimateEnd(_key, _exists) {}
-
+ 
+//   // 触发下拉框的点击事件
 //   @autobind
 //   handleMenuClick(targetOption, menuIndex, e) {
 
@@ -845,56 +905,6 @@
 //     }
     
 //   }
-
-//   @autobind
-//   handleMenuSelect(targetOption, menuIndex, e) {
-//     // Keep focused state for keyboard support
-//     const triggerNode = this.trigger.getRootDomNode();
-//     if (triggerNode && triggerNode.focus) {
-//       triggerNode.focus();
-//     }
-//     const { changeOnSelect, loadData, expandTrigger } = this.props;
-//     if (!targetOption || targetOption.disabled) {
-//       return;
-//     }
-
-
-
-//     let { activeValue } = this.state;
-//     activeValue = activeValue.slice(0, menuIndex + 1);
-//     activeValue[menuIndex] = targetOption.value;
-//     const activeOptions = this.getActiveOptions(activeValue);
-
-//     if (targetOption.isLeaf === false && !targetOption.children && loadData) {
-//       if (changeOnSelect) {
-//         this.handleChange(activeOptions, { visible: true }, e);
-//       }
-//       this.setState({ activeValue });
-//       loadData(activeOptions);
-//       return;
-//     }
-//     const newState = {};
-//     if (!targetOption.children || !targetOption.children.length) {
-//       this.handleChange(activeOptions, { visible: false }, e);
-//       // set value to activeValue when select leaf option
-//       newState.value = activeValue;
-//       // add e.type judgement to prevent `onChange` being triggered by mouseEnter
-//     } else if (changeOnSelect && (e.type === 'click' || e.type === 'keydown')) {
-//       if (expandTrigger === 'hover') {
-//         this.handleChange(activeOptions, { visible: false }, e);
-//       } else {
-//         this.handleChange(activeOptions, { visible: true }, e);
-//       }
-//       // set value to activeValue on every select
-//       newState.value = activeValue;
-//     }
-//     newState.activeValue = activeValue;
-//     //  not change the value by keyboard
-//     if ('value' in this.props || (e.type === 'keydown' && e.keyCode !== KeyCode.ENTER)) {
-//       delete newState.value;
-//     }
-//     this.setState(newState);
-//   };
 
 //   handleOptionSelect(record: Record) {
 //     this.prepareSetValue(this.processRecordToObject(record));
@@ -951,7 +961,7 @@
 //       allArray = []
 //     }
 //     if(record){
-//       allArray = [...allArray,record.get(valueField)]
+//       allArray = [record.get(valueField),...allArray]
 //     }
 //     if(record.parent){
 //       return this.treeValueToArray(record.parent,allArray)
@@ -1110,8 +1120,4 @@
 // @observer
 // export default class ObserverSelect extends Select<SelectProps> {
 //   static defaultProps = Select.defaultProps;
-
-//   static Option = Option;
-
-//   static OptGroup = OptGroup;
 // }

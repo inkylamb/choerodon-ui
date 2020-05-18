@@ -42,14 +42,17 @@ class App extends React.Component {
   });
 
   ds = new DataSet({
+    autoCreate:true,
     fields: [
       {
         name: 'user',
         type: 'object',
+        defaultValue:["员工管理(react)","组织架构"],
         textField: 'text',
         valueField: 'text',
         label: '部门',
         options: this.optionDs,
+        disable:true,
       },
     ],
     events: {
