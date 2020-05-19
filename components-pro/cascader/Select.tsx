@@ -32,6 +32,7 @@ import { Renderer } from '../field/FormField';
 import Item from 'choerodon-ui/lib/list/Item';
 import arrayTreeFilter from 'array-tree-filter';
 import { OptionProps } from '../option/Option';
+import { Children } from 'react';
 
 function updateActiveKey(menu: Menu, activeKey: string) {
   const store = menu.getStore();
@@ -214,7 +215,32 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   constructor(props, context) {
     super(props, context);
-    this.setActiveValue({})
+    const activevalue = this.findActiveRecord(this.getValues())
+    this.setActiveValue(activevalue || {})
+  }
+
+  findActiveRecord(value){
+    const { options } = this;
+    let result 
+    const returnactiveValue = (arrayOption,index) => {
+      if(arrayOption && arrayOption.length > 0){
+        arrayOption.forEach((item) => {
+          if(isSame(value[index],this.getRecordOrObjValue(item,this.valueField))){
+            result = item
+            if(item.children){
+              returnactiveValue(item.children,++index)
+            }
+          }
+        })
+      }
+    }
+    if(options instanceof DataSet){
+      returnactiveValue(options.treeData,0)
+    }
+    if(options instanceof Array){
+      returnactiveValue(options,0)
+    }
+    return result
   }
 
   @action
@@ -1012,8 +1038,8 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       }
     }
     super.removeValues(values, index)
-    this.collapse();
     this.setActiveValue({});
+    this.collapse();
   }
 
   @action
