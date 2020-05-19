@@ -6,6 +6,7 @@ import isString from 'lodash/isString';
 import isEqual from 'lodash/isEqual';
 import isNil from 'lodash/isNil';
 import noop from 'lodash/noop';
+import cloneDeep from 'lodash/cloneDeep'
 import isPlainObject from 'lodash/isPlainObject';
 import { observer } from 'mobx-react';
 import { action, observable, toJS, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
@@ -257,6 +258,9 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   @computed
   get optionsWithCombo(): Record[] {
+    if(!this.cascadeOptions){
+      return [...this.comboOptions.data]
+    }
     return [...this.comboOptions.data, ...this.cascadeOptions];
   }
 
@@ -311,11 +315,31 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       multiple,
       observableProps: { children, options },
     } = this;
+    let dealOption 
+    if(options instanceof Array){
+      dealOption = this.addOptionsParent(options,undefined)
+    }else{
+      dealOption = options
+    }
     return (
-      options ||
+      dealOption ||
       (field && field.options) ||
       normalizeOptions({ textField, valueField, disabledField, multiple, children })
     );
+  }
+  
+  // 增加父级属性
+  addOptionsParent(options,parent){
+    if(options.length > 0){
+      const optionPrent = options.map( (ele) => {
+        ele.parent = parent || undefined;
+        if(ele.children){
+          this.addOptionsParent(ele.children,ele)
+        }
+        return ele
+      });
+      return optionPrent
+    }
   }
 
   @computed
@@ -465,7 +489,12 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     }
     return getConfig('renderEmpty')('Select');
   }
-
+  
+  /**
+   * 返回一个打平tree返回层级
+   * @param record 
+   * @param fn 
+   */
   findParentRecodTree(record:Record,fn?:any){
       const recordTree:any[] = []
       if(record){
@@ -483,7 +512,26 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       }
       return recordTree
   }
+ 
+  /**
+   * 获取record 或者 obj对应的值
+   * @param value 
+   * @param key 
+   */
+  getRecordOrObjValue(value,key){
+    if(value instanceof Record){
+      return value.get(key)
+    }
+     if(value instanceof Object){
+      return value[key]
+    }
+    return value
+  }
 
+  /**
+   * 渲染menu 表格
+   * @param menuProps 
+   */
   @autobind
   getMenu(menuProps: object = {}): ReactNode {
     // 暂时不用考虑分组情况 groups
@@ -499,41 +547,66 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     const menuDisabled = this.isDisabled();
     let optGroups: any[] = [];
     let selectedValues: any[] = [];
-    function treePropsChange(treeRecord:Record[]){
+    const treePropsChange = (treeRecord:Record[]|any[]) => {
         let treeRecords:any = []
         if(treeRecord.length > 0){
-          treeRecords = treeRecord.map(recordItem => {
-            const value = recordItem.get(valueField);
-            const text = recordItem.get(textField);
-            const key: Key = getItemKey(recordItem, text, value);
-            const optionProps = onOption({ dataSet: options, record: recordItem });
-            const optionDisabled = menuDisabled || (optionProps && optionProps.disabled);
-            let children
-            if (recordItem.isSelected) {
-              selectedValues.push(recordItem);   
+          treeRecords = treeRecord.map((recordItem,index) => {
+            const value = this.getRecordOrObjValue(recordItem,valueField);
+            const text = this.getRecordOrObjValue(recordItem,textField);
+            if(recordItem instanceof Record){
+              const optionProps = onOption({ dataSet: options, record: recordItem });
+              const optionDisabled = menuDisabled || (optionProps && optionProps.disabled);
+              const key: Key = getItemKey(recordItem, text, value);
+              let children
+              if (recordItem.isSelected) {
+                selectedValues.push(recordItem);   
+              }
+              if(recordItem.children){
+                children = treePropsChange(recordItem.children)
+              }
+              return (children ? {
+                key,
+                label:text,
+                value:recordItem,
+                disabled: optionDisabled,
+                children,
+              }:{
+                key,
+                label:text,
+                value:recordItem,
+                disabled: optionDisabled,
+              })
             }
-            if(recordItem.children){
-              children = treePropsChange(recordItem.children)
-            }
-            return (children ? {
-              key,
-              label:text,
-              value:recordItem,
-              disabled: optionDisabled,
-              children,
-            }:{
-              key,
-              label:text,
-              value:recordItem,
-              disabled: optionDisabled,
-            })
+              const optionDisabled = recordItem.disabled
+              const key: Key = index
+              let children: any
+              if(recordItem.children){
+                children = treePropsChange(recordItem.children)
+              }
+              return (children ? {
+                key,
+                label:text,
+                value:recordItem,
+                disabled: optionDisabled,
+                children,
+              }:{
+                key,
+                label:text,
+                value:recordItem,
+                disabled: optionDisabled,
+              })
           })
         }
         return treeRecords
        }
-       optGroups = treePropsChange(options.treeData)
-    selectedValues = this.findParentRecodTree(this.activeValue)
-    console.log(selectedValues)
+       if(options instanceof DataSet){
+        optGroups = treePropsChange(options.treeData)
+       }else if(options instanceof Array){
+        optGroups = treePropsChange(options)
+       }else{
+        optGroups = []
+       }
+       selectedValues = this.findParentRecodTree(this.activeValue)
     return options && options.length > 0 ? (
       <Menus
           {...menuProps}
@@ -554,11 +627,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     )
   }
 
-   // 遍历出父亲节点
-
-
-  
-
+  // 遍历出父亲节点
   @computed
   get loading(): boolean {
     const { field, options } = this;
@@ -632,7 +701,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   // 获取当前列第一个值和最后的值
-   findTreeDataFirstLast(options,activeValue,direction){
+  findTreeDataFirstLast(options,activeValue,direction){
     const nowIndexList = activeValue.parent ? activeValue.parent.children : options
      if(nowIndexList.length > 0 && direction > 0){
        return nowIndexList[nowIndexList.length-1]
@@ -641,7 +710,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       return nowIndexList[0]
      }
      return activeValue
-   }
+  }
 
   handleKeyDownFirstLast(e, direction: number) {
     stopEvent(e);
@@ -680,7 +749,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   handleKeyDownPrevNext(e, direction: number) {
-    if (!this.multiple && !this.editable) {
+    if (!this.editable) {
       if(this.options instanceof DataSet){
         if(isEmpty(toJS(this.activeValue))){
           this.setActiveValue(this.options.treeData[0])
@@ -711,7 +780,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
 
   handleKeyLeftRightNext(e, direction: number) {
-     if (!this.multiple && !this.editable) {
+     if (!this.editable) {
       if(this.options instanceof DataSet){
         if(isEmpty(toJS(this.activeValue))){
           this.setActiveValue(this.options.treeData[0])
@@ -727,15 +796,15 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   handleKeyDownEnter(e) {
-    if (this.popup) {
+    if (this.popup && !this.editable) {
       const value = this.activeValue
-      if (this.multiple && this.isSelected(value)) {
+      if (this.isSelected(value)) {
         this.unChoose(value);
       } else {
         this.choose(value);
       }
-      e.preventDefault();
     }
+    e.preventDefault();
   }
   
   handleKeyDownEsc(e) {
@@ -770,7 +839,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   syncValueOnBlur(value) {
-    debugger
     if (value) {
       const { data } = this.comboOptions;
       this.options.ready().then(() => {
@@ -821,12 +889,19 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   isSelected(record: Record) {
     const { valueField } = this;
     const autoType = this.getProp('type') === FieldType.auto;
-    return this.getValues().some(value => {
-      const simpleValue = getSimpleValue(value, valueField);
-      return autoType
-        ? isSameLike(record.get(valueField), simpleValue)
-        : isSame(record.get(valueField), simpleValue);
-    });
+    // 多值处理
+    if(this.multiple){
+      return this.getValues().some(value => {
+        const simpleValue = getSimpleValue(value, valueField);
+        return autoType
+          ? isSameLike(this.treeValueToArray(record), toJS(simpleValue))
+          : isSame(this.treeValueToArray(record), toJS(simpleValue));
+      });
+    }
+    const simpleValue = this.getValues()
+    return autoType
+      ? isSameLike(this.treeValueToArray(record), simpleValue)
+      : isSame(this.treeValueToArray(record), simpleValue);
   }
 
   generateComboOption(value: string | any[], callback?: (text: string) => void): void {
@@ -898,15 +973,15 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   // 触发下拉框的点击事件
   @autobind
   handleMenuClick(targetOption, menuIndex, e) {
-
+    
     if (!targetOption || targetOption.disabled) {
       return;
     }
-    if(!(this.isSelected(targetOption.value) && this.multiple)){
+    if(!this.isSelected(targetOption.value)){
       if (targetOption.children ) {
         this.setPopup(true);
         this.setActiveValue(targetOption.value);
-      }else {
+      } else {
         this.choose(targetOption.value);
         this.setActiveValue(targetOption.value);
       }
@@ -921,9 +996,24 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   handleOptionUnSelect(record: Record) {
-    const { valueField } = this;
-    const newValue = record.get(valueField);
+    const newValue = this.treeValueToArray(record);
     this.removeValue(newValue, -1);
+  }
+  
+  // 移除所选值
+  removeValues(values: any[], index: number = 0) {
+    if(!this.multiple){
+      const oldValues = this.getValues() 
+      if (this.getValueKey(oldValues) === this.getValueKey(values[0])) {
+        if (index === -1) {
+          this.afterRemoveValue(values[0], 1);
+          this.setValue([]);
+        }
+      }
+    }
+    super.removeValues(values, index)
+    this.collapse();
+    this.setActiveValue({});
   }
 
   @action
@@ -958,20 +1048,28 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   processRecordToObject(record: Record) {
     const { primitive, valueField } = this;
-    if(record && record.dataSet!.getFromTree(0)){
+    if(record instanceof Record && record.dataSet!.getFromTree(0)){
+      return this.treeValueToArray(record)
+    }
+    if(record instanceof Object){
       return this.treeValueToArray(record)
     }
     const result =  primitive ? record.get(valueField) : record.toData();
     return result
   }
 
+  /**
+   * 返回tree 的值的列表方法
+   * @param record 
+   * @param allArray 
+   */
   treeValueToArray(record:Record,allArray?:string[]){
     const { valueField } = this;
     if(!allArray){
       allArray = []
     }
     if(record){
-      allArray = [record.get(valueField),...allArray]
+      allArray = [this.getRecordOrObjValue(record,valueField),...allArray]
     }
     if(record.parent){
       return this.treeValueToArray(record.parent,allArray)
@@ -1027,6 +1125,20 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     this.setText(undefined);
     super.clear();
     this.removeComboOptions();
+  }
+
+  addValue(...values) {
+    if (this.multiple) {
+      const oldValues = this.getValues();
+      if (values.length) {
+        const oldValuesJS = oldValues.map(item => toJS(item))
+        this.setValue([...oldValuesJS, ...values]);
+      } else if (!oldValues.length) {
+        this.setValue(this.emptyValue);
+      }
+    } else {
+      this.setValue(values.pop());
+    }
   }
 
   resetFilter() {

@@ -3,6 +3,7 @@ order: 0
 title:
   zh-CN: 基本
   en-US: Basic
+only: true
 ---
 
 ## zh-CN
@@ -19,7 +20,7 @@ import {
   Table,
   NumberField,
   DateTimePicker,
-  SelectBox,
+  Cascader,
   Modal,
   Button,
   notification,
@@ -27,10 +28,6 @@ import {
 
 const { Column } = Table;
 
-function sexIdRenderer({ record }) {
-  // 获取性别codeValueId
-  return record.getField('sex').getLookupData().codeValueId;
-}
 
 function handleUserDSLoad({ dataSet }) {
   const first = dataSet.get(0);
@@ -94,7 +91,25 @@ const codeDescriptionDynamicProps = {
   },
 };
 
+cascaderRender=({ value}) => {
+  return value.join('/')
+}
+
 class App extends React.Component {
+
+  optionDs = new DataSet({
+    queryUrl: '/tree-less.mock',
+    autoQuery: true,
+    selection: 'single',
+    parentField: 'parentId',
+    idField: 'id',
+    fields: [
+      { name: 'id', type: 'number' },
+      { name: 'expand', type: 'boolean' },
+      { name: 'parentId', type: 'number' },
+    ],
+  }); 
+
   userDs = new DataSet({
     primaryKey: 'userid',
     name: 'user',
@@ -241,14 +256,17 @@ class App extends React.Component {
         bind: 'codeMultiple.description',
         type: 'string',
         label: '代码描述',
-        multiple: ',',
+        multiple: true,
       },
       {
-        name: 'sex',
-        type: 'string',
-        label: '性别',
-        lookupCode: 'HR.EMPLOYEE_GENDER',
         required: true,
+        name: 'id',
+        type: 'object',
+        textField: 'text',
+        valueField: 'text',
+        label: '部门',
+        multiple:true,
+        options: this.optionDs,
       },
       {
         name: 'sexMultiple',
@@ -395,8 +413,7 @@ class App extends React.Component {
         <Column name="code_select" editor width={150} />
         <Column name="codeMultiple" editor width={150} />
         <Column name="codeMultiple_code" width={150} />
-        <Column name="sex" editor={<SelectBox />} width={150} />
-        <Column header="性别id" renderer={sexIdRenderer} />
+        <Column name="id" renderer={cascaderRender} editor={<Cascader />} width={150} />
         <Column name="sexMultiple" editor width={150} />
         <Column name="accountMultiple" editor width={150} />
         <Column name="date.startDate" editor width={150} />

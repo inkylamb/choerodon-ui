@@ -45,14 +45,12 @@ class App extends React.Component {
     autoCreate:true,
     fields: [
       {
-        name: 'user',
+        name: 'id',
         type: 'object',
-        defaultValue:["员工管理(react)","组织架构"],
         textField: 'text',
         valueField: 'text',
         label: '部门',
         options: this.optionDs,
-        disable:true,
       },
     ],
     events: {
@@ -64,7 +62,7 @@ class App extends React.Component {
     return (
       <Cascader
             dataSet={this.ds}
-            name="user"
+            name="id"
       />
     );
   }
