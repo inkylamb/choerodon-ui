@@ -3,6 +3,7 @@ order: 4
 title:
   zh-CN: 数据源选项
   en-US: DataSet Options
+only: true
 ---
 
 ## zh-CN
@@ -46,9 +47,10 @@ class App extends React.Component {
     fields: [
       {
         name: 'id',
-        type: 'object',
+        type: 'string',
         textField: 'text',
-        valueField: 'text',
+        defaultValue:["2", "7"],
+        valueField: 'id',
         label: '部门',
         options: this.optionDs,
       },

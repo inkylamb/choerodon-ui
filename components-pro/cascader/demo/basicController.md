@@ -3,7 +3,6 @@ order: 4
 title:
   zh-CN: 数据源选项
   en-US: DataSet Options
-only: true
 ---
 
 ## zh-CN
@@ -46,6 +45,6 @@ function onChange(value) {
 }
 
 ReactDOM.render(
-  <Cascader  value={["zhejiang", "hangzhou", "xihu"]} options={options} onChange={onChange} placeholder="Please select" />,
+  <Cascader value={["zhejiang", "hangzhou", "xihu"]} options={options} onChange={onChange} placeholder="Please select" />,
   mountNode);
 ```

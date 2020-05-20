@@ -5,6 +5,7 @@ import debounce from 'lodash/debounce';
 import isString from 'lodash/isString';
 import isEqual from 'lodash/isEqual';
 import isNil from 'lodash/isNil';
+import isEmpty from 'lodash/isEmpty';
 import noop from 'lodash/noop';
 import cloneDeep from 'lodash/cloneDeep'
 import isPlainObject from 'lodash/isPlainObject';
@@ -25,7 +26,7 @@ import { stopEvent } from '../_util/EventManager';
 import normalizeOptions from '../option/normalizeOptions';
 import { $l } from '../locale-context';
 import * as ObjectChainValue from '../_util/ObjectChainValue';
-import isEmpty from '../_util/isEmpty';
+import isEmptyUtil from '../_util/isEmpty';
 import isSame from '../_util/isSame';
 import isSameLike from '../_util/isSameLike';
 import { Renderer } from '../field/FormField';
@@ -67,6 +68,18 @@ function getSimpleValue(value, valueField) {
     return ObjectChainValue.get(value, valueField);
   }
   return value;
+}
+/**
+ * 简单比较arry的值是否相同
+ * 主要问题是观察变量修改了值类型所以使用此方法
+ * @param arr 
+ * @param arrNext 
+ */
+function arraySameLike(arr,arrNext):boolean {
+  if(arr instanceof Array && arrNext instanceof Array ){
+    return arr.toString() === arrNext.toString()
+  }
+  return false
 }
 
 export type onOptionProps = { dataSet: DataSet; record: Record };
@@ -215,8 +228,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   constructor(props, context) {
     super(props, context);
-    const activevalue = this.findActiveRecord(this.getValues())
-    this.setActiveValue(activevalue || {})
+    this.setActiveValue({})
   }
 
   findActiveRecord(value){
@@ -632,7 +644,20 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
        }else{
         optGroups = []
        }
-       selectedValues = this.findParentRecodTree(this.activeValue)
+       // 判断激活值是否满足条件
+       if(!this.multiple){
+         console.log(isEmpty(toJS(this.activeValue)))
+         console.log(isEmpty(this.activeValue))
+         console.log(this.activeValue)
+         console.log(toJS(this.activeValue))
+         console.log(isEmpty({}))
+        if(!(isEmpty(toJS(this.activeValue)) || isEmpty(this.getValues()))){
+          if(arraySameLike(this.treeValueToArray(this.activeValue),this.getValue))
+           selectedValues = this.findParentRecodTree(this.activeValue)
+        }else{
+           selectedValues = this.findParentRecodTree(this.findActiveRecord(this.getValues()))
+        }
+       }
     return options && options.length > 0 ? (
       <Menus
           {...menuProps}
@@ -904,30 +929,44 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   findByValue(value): Record | undefined {
-    const { valueField } = this;
-    const autoType = this.getProp('type') === FieldType.auto;
+    const { valueField,multiple } = this;
+    const findTreeItem = (options,valueItem,index) => {
+      let sameItemTreeNode
+      if(!multiple && valueItem.length > 0){
+          sameItemTreeNode = options.find( ele => {
+          return isSameLike(this.getRecordOrObjValue(ele,valueField), valueItem[index])
+         })
+         if(sameItemTreeNode){
+          if(sameItemTreeNode.children){
+            return findTreeItem(sameItemTreeNode.children,valueItem,++index)
+          }
+          return sameItemTreeNode
+        }
+      }
+    }
     value = getSimpleValue(value, valueField);
-    return this.optionsWithCombo.find(record =>
-      autoType ? isSameLike(record.get(valueField), value) : isSame(record.get(valueField), value),
-    );
+    if(this.options instanceof DataSet){
+      return findTreeItem(this.options.treeData,value,0)
+    }
+    return findTreeItem(this.options,value,0)
   }
+
+  
+
+
 
   isSelected(record: Record) {
     const { valueField } = this;
-    const autoType = this.getProp('type') === FieldType.auto;
     // 多值处理
     if(this.multiple){
       return this.getValues().some(value => {
         const simpleValue = getSimpleValue(value, valueField);
-        return autoType
-          ? isSameLike(this.treeValueToArray(record), toJS(simpleValue))
-          : isSame(this.treeValueToArray(record), toJS(simpleValue));
+        return arraySameLike(this.treeValueToArray(record), toJS(simpleValue));
       });
     }
+
     const simpleValue = this.getValues()
-    return autoType
-      ? isSameLike(this.treeValueToArray(record), simpleValue)
-      : isSame(this.treeValueToArray(record), simpleValue);
+    return arraySameLike(this.treeValueToArray(record), simpleValue);
   }
 
   generateComboOption(value: string | any[], callback?: (text: string) => void): void {
@@ -1074,11 +1113,12 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   processRecordToObject(record: Record) {
     const { primitive, valueField } = this;
+    debugger
     if(record instanceof Record && record.dataSet!.getFromTree(0)){
-      return this.treeValueToArray(record)
+      return primitive ? this.treeValueToArray(record) :this.treeToArray(record)
     }
     if(record instanceof Object){
-      return this.treeValueToArray(record)
+      return primitive ? this.treeValueToArray(record): this.treeToArray(record)
     }
     const result =  primitive ? record.get(valueField) : record.toData();
     return result
@@ -1103,6 +1143,47 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     return allArray
   }
 
+  /**
+   * 返回tree 的值的列表方法
+   * @param record 
+   * @param allArray 
+   */
+  treeTextToArray(record:Record,allArray?:string[]){
+    const { textField } = this;
+    if(!allArray){
+      allArray = []
+    }
+    if(record){
+      allArray = [this.getRecordOrObjValue(record,textField),...allArray]
+    }
+    if(record.parent){
+      return this.treeTextToArray(record.parent,allArray)
+    }
+    return allArray
+  }
+
+   /**
+   * 返回tree 的值的列表方法
+   * @param record 
+   * @param allArray 
+   */
+  treeToArray(record:Record,allArray?:string[]){
+    if(!allArray){
+      allArray = []
+    }
+    if(record){
+      if(record instanceof Record){
+        allArray = [record.toData(),...allArray]
+      }else{
+        allArray = [record,...allArray]
+      }
+    }
+    if(record.parent){
+      return this.treeToArray(record.parent,allArray)
+    }
+    return allArray
+  }
+
   processObjectValue(value, textField) {
     if (!isNil(value)) {
       if (isPlainObject(value)) {
@@ -1110,26 +1191,27 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       }
       const found = this.findByValue(value);
       if (found) {
-        return found.get(textField);
+        if(value instanceof Array)
+        return this.treeTextToArray(found);
       }
     }
   }
 
   processLookupValue(value) {
     const { field, textField, primitive } = this;
-    if (primitive && field && field.lookup) {
+    const processvalue = this.processObjectValue(value, textField)
+    if(processvalue instanceof Array){
+      return processvalue.join('/') 
+    }
+    if (primitive && field ) {
       return super.processValue(field.getText(value));
     }
-    return super.processValue(this.processObjectValue(value, textField));
   }
   
   // 处理value
   processValue(value: any): string {
     const text = this.processLookupValue(value);
-    if(value instanceof Array){
-      return value.join('/')
-    }
-    if (isEmpty(text)) {
+    if (isEmptyUtil(text)) {
       if (isPlainObject(value)) {
         return ObjectChainValue.get(value, this.valueField) || '';
       }
@@ -1196,7 +1278,8 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   @autobind
   chooseAll() {
-    this.setValue(this.filteredOptions.map(this.processRecordToObject, this));
+    const chooseAll = this.filteredOptions.map(this.processRecordToObject,this)
+    this.setValue(chooseAll);
   }
 
   @autobind
