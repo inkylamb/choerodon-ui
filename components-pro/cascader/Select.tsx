@@ -231,13 +231,13 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     this.setActiveValue({})
   }
 
-  findActiveRecord(value){
-    const { options } = this;
+  findActiveRecord(value,options){
     let result 
+    debugger
     const returnactiveValue = (arrayOption,index) => {
       if(arrayOption && arrayOption.length > 0){
         arrayOption.forEach((item) => {
-          if(isSame(value[index],this.getRecordOrObjValue(item,this.valueField))){
+          if(isSameLike(value[index],this.getRecordOrObjValue(item,this.valueField))){
             result = item
             if(item.children){
               returnactiveValue(item.children,++index)
@@ -542,7 +542,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
           recordTree.push(record)
         }
       }
-      if(record.parent){
+      if(record && record.parent){
         if(fn instanceof Function){
         return [...this.findParentRecodTree(record.parent,fn),...recordTree]
         }
@@ -644,21 +644,29 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
        }else{
         optGroups = []
        }
-       // 判断激活值是否满足条件
-       if(!this.multiple){
-         console.log(isEmpty(toJS(this.activeValue)))
-         console.log(isEmpty(this.activeValue))
-         console.log(this.activeValue)
-         console.log(toJS(this.activeValue))
-         console.log(isEmpty({}))
-        if(!(isEmpty(toJS(this.activeValue)) || isEmpty(this.getValues()))){
-          if(arraySameLike(this.treeValueToArray(this.activeValue),this.getValue))
-           selectedValues = this.findParentRecodTree(this.activeValue)
-        }else{
-           selectedValues = this.findParentRecodTree(this.findActiveRecord(this.getValues()))
+
+       /**
+        * activeValues
+        * 以及value 展示激活状态的判断
+        */
+    if(!this.multiple){
+        if(!isEmpty(this.getValues())){
+          if(this.activeValues && arraySameLike(this.treeValueToArray(this.activeValue),this.getValue) || this.activeValues.children){
+            selectedValues = this.findParentRecodTree(this.activeValue)
+          }else if(this.activeValues){
+              if(options instanceof DataSet){
+                selectedValues = this.findParentRecodTree(this.findActiveRecord(this.getValues(),this.options.treeData))
+               }else if(options instanceof Array){
+                selectedValues = this.findParentRecodTree(this.findActiveRecord(this.getValues(),this.options))
+               }else{
+                selectedValues = []
+               }
+            }
+          }
+        }else if(this.activeValues){
+          selectedValues = this.findParentRecodTree(this.activeValue)
         }
-       }
-    return options && options.length > 0 ? (
+      return options && options.length > 0 ? (
       <Menus
           {...menuProps}
           prefixCls={this.prefixCls}
@@ -1113,7 +1121,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   processRecordToObject(record: Record) {
     const { primitive, valueField } = this;
-    debugger
     if(record instanceof Record && record.dataSet!.getFromTree(0)){
       return primitive ? this.treeValueToArray(record) :this.treeToArray(record)
     }
