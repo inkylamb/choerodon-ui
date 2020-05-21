@@ -48,7 +48,7 @@ class App extends React.Component {
         name: 'id',
         type: 'string',
         textField: 'text',
-        defaultValue:["2", "7"],
+        defaultValue:[["2", "7"]],
         valueField: 'id',
         label: '部门',
         options: this.optionDs,
@@ -62,8 +62,9 @@ class App extends React.Component {
   render() {
     return (
       <Cascader
-            dataSet={this.ds}
-            name="id"
+          multiple
+          dataSet={this.ds}
+          name="id"
       />
     );
   }

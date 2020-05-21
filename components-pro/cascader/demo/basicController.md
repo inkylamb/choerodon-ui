@@ -45,6 +45,6 @@ function onChange(value) {
 }
 
 ReactDOM.render(
-  <Cascader value={["zhejiang", "hangzhou", "xihu"]} options={options} onChange={onChange} placeholder="Please select" />,
+  <Cascader multiple value={[["zhejiang", "hangzhou", "xihu"]]} options={options} onChange={onChange} placeholder="Please select" />,
   mountNode);
 ```

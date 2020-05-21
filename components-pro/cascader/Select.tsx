@@ -7,13 +7,11 @@ import isEqual from 'lodash/isEqual';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import noop from 'lodash/noop';
-import cloneDeep from 'lodash/cloneDeep'
 import isPlainObject from 'lodash/isPlainObject';
 import { observer } from 'mobx-react';
 import { action, observable, toJS, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
 import { Menus  } from 'choerodon-ui/lib/rc-components/cascader';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
-import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import { getConfig } from 'choerodon-ui/lib/configure';
 import TriggerField, { TriggerFieldProps } from '../trigger-field/TriggerField';
 import autobind from '../_util/autobind';
@@ -27,24 +25,19 @@ import normalizeOptions from '../option/normalizeOptions';
 import { $l } from '../locale-context';
 import * as ObjectChainValue from '../_util/ObjectChainValue';
 import isEmptyUtil from '../_util/isEmpty';
-import isSame from '../_util/isSame';
 import isSameLike from '../_util/isSameLike';
 import { Renderer } from '../field/FormField';
-import Item from 'choerodon-ui/lib/list/Item';
-import arrayTreeFilter from 'array-tree-filter';
 import { OptionProps } from '../option/Option';
-import { Children } from 'react';
 
-function updateActiveKey(menu: Menu, activeKey: string) {
-  const store = menu.getStore();
-  const menuId = menu.getEventKey();
-  const state = store.getState();
-  store.setState({
-    activeKey: {
-      ...state.activeKey,
-      [menuId]: activeKey,
-    },
-  });
+export interface OptionObject {
+  value:any,
+  meaning:string,
+}
+
+export interface ProcessOption extends OptionObject{
+  parent:any,
+  children?:any,
+  disabled?:boolean,
 }
 
 function defaultSearchMatcher({ record, text, textField }) {
@@ -115,11 +108,6 @@ export interface SelectProps extends TriggerFieldProps {
    */
   optionsFilter?: (record: Record, index: number, records: Record[]) => boolean;
   /**
-   * 当选项改变时，检查并清除不在选项中的值
-   * @default true
-   */
-  checkValueOnOptionsChange?: boolean;
-  /**
    * 下拉框匹配输入框宽度
    * @default true
    */
@@ -138,17 +126,6 @@ export interface SelectProps extends TriggerFieldProps {
    * false - 选项值对象
    */
   primitiveValue?: boolean;
-  /**
-   * 渲染Option文本的钩子
-   * @example
-   * ```js
-   * <Select
-   *   {...props}
-   *   optionRenderer={({ record, text, value }) => text + '$'}
-   * />
-   * ```
-   */
-  optionRenderer?: Renderer;
   /**
    * 当下拉列表为空时显示的内容
    */
@@ -172,28 +149,17 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
      * 过滤器
      * @default false
      */
-    searchable: PropTypes.bool,
+    // searchable: PropTypes.bool,
     /**
      * 搜索匹配器。 当为字符串时，作为lookup的参数名来重新请求值列表。
      */
-    searchMatcher: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    // searchMatcher: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     /**
      * 是否为原始值
      * true - 选项中valueField对应的值
      * false - 选项值对象
      */
     primitiveValue: PropTypes.bool,
-    /**
-     * 渲染Option文本的钩子
-     * @example
-     * ```js
-     * <Select
-     *   {...props}
-     *   optionRenderer={({ dataSet, record, text, value }) => text + '$'}
-     * />
-     * ```
-     */
-    optionRenderer: PropTypes.func,
     /**
      * 当下拉列表为空时显示的内容
      */
@@ -207,19 +173,17 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   static defaultProps = {
     ...TriggerField.defaultProps,
-    suffixCls: 'select',
+    suffixCls: 'cascader',
     combo: false,
     searchable: false,
     dropdownMatchSelectWidth: true,
-    checkValueOnOptionsChange: true,
     onOption: defaultOnOption,
   };
 
   comboOptions: DataSet = new DataSet();
 
-  menu?: Menu | null;
-
   @observable activeValues 
+
 
   @computed
   get activeValue(): any {
@@ -233,7 +197,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   findActiveRecord(value,options){
     let result 
-    debugger
     const returnactiveValue = (arrayOption,index) => {
       if(arrayOption && arrayOption.length > 0){
         arrayOption.forEach((item) => {
@@ -259,7 +222,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   setActiveValue(activeValues:any) {
     this.activeValues = activeValues;
   }
-
 
   @computed
   get searchMatcher(): SearchMatcher {
@@ -390,10 +352,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   checkComboReaction?: IReactionDisposer;
 
-  @autobind
-  saveMenu(node) {
-    this.menu = node;
-  }
 
   checkValue() {
     this.checkValueReaction = reaction(() => this.cascadeOptions, () => this.processSelectedData());
@@ -427,10 +385,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   componentWillMount() {
     super.componentWillMount();
-    const { checkValueOnOptionsChange, combo } = this.props;
-    if (checkValueOnOptionsChange) {
-      this.checkValue();
-    }
+    const {  combo } = this.props;
     if (combo) {
       this.checkCombo();
       this.generateComboOption(this.getValue());
@@ -445,13 +400,8 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   componentWillReceiveProps(nextProps, nextContext) {
     super.componentWillReceiveProps(nextProps, nextContext);
-    const { checkValueOnOptionsChange, combo } = this.props;
-    if (checkValueOnOptionsChange && !nextProps.checkValueOnOptionsChange) {
-      this.clearCheckValue();
-    }
-    if (!checkValueOnOptionsChange && nextProps.checkValueOnOptionsChange) {
-      this.checkValue();
-    }
+    const { combo } = this.props;
+
     if (combo && !nextProps.combo) {
       this.removeComboOptions();
       this.clearCheckCombo();
@@ -480,9 +430,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       'optionsFilter',
       'dropdownMatchSelectWidth',
       'dropdownMenuStyle',
-      'checkValueOnOptionsChange',
       'primitiveValue',
-      'optionRenderer',
       'notFoundContent',
       'onOption',
     ]);
@@ -585,7 +533,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     const menuDisabled = this.isDisabled();
     let optGroups: any[] = [];
     let selectedValues: any[] = [];
-    const treePropsChange = (treeRecord:Record[]|any[]) => {
+    const treePropsChange = (treeRecord:ProcessOption[] | Record[]) => {
         let treeRecords:any = []
         if(treeRecord.length > 0){
           treeRecords = treeRecord.map((recordItem,index) => {
@@ -637,47 +585,67 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
         }
         return treeRecords
        }
-       if(options instanceof DataSet){
-        optGroups = treePropsChange(options.treeData)
-       }else if(options instanceof Array){
+       if(options instanceof Array){
         optGroups = treePropsChange(options)
+       }else if(options instanceof DataSet){
+        optGroups = treePropsChange(options.treeData)
        }else{
         optGroups = []
        }
 
        /**
-        * activeValues
+        * 获取当前激活的menueItem
         * 以及value 展示激活状态的判断
+        * 按钮能够控制不受值的影响
+        * inputValue：输入框的值 
+        * activeValue：激活值（choose和键盘影响）
+        * this.popup:开启状态有激活值那么为激活值
         */
-    if(!this.multiple){
-        if(!isEmpty(this.getValues())){
-          if(this.activeValues && arraySameLike(this.treeValueToArray(this.activeValue),this.getValue) || this.activeValues.children){
-            selectedValues = this.findParentRecodTree(this.activeValue)
-          }else if(this.activeValues){
-              if(options instanceof DataSet){
-                selectedValues = this.findParentRecodTree(this.findActiveRecord(this.getValues(),this.options.treeData))
-               }else if(options instanceof Array){
-                selectedValues = this.findParentRecodTree(this.findActiveRecord(this.getValues(),this.options))
+      const getActiveValue = (inputValue) => {
+        let activeValue = []
+        if(!isEmpty(inputValue)){
+          if(inputValue && arraySameLike(this.treeValueToArray(this.activeValue),inputValue) || this.activeValue.children){
+            activeValue = this.findParentRecodTree(this.activeValue)
+          }else if(this.activeValue){
+              if(options instanceof Array){
+                activeValue = this.findParentRecodTree(this.findActiveRecord(inputValue,this.options))
+               }else if(options instanceof DataSet){
+                activeValue = this.findParentRecodTree(this.findActiveRecord(inputValue,this.options.treeData))
                }else{
-                selectedValues = []
+                activeValue = []
                }
             }
+          }else if(inputValue){
+            activeValue = this.findParentRecodTree(this.activeValue)
           }
-        }else if(this.activeValues){
+          return activeValue
+      }
+      if(this.popup && !isEmpty(this.activeValue)){
+        selectedValues = this.findParentRecodTree(this.activeValue)
+      }else if(!this.multiple){
+        selectedValues = getActiveValue(this.getValues())
+      }else if(this.getValues() && this.getValues().length > 0){
+          for(let i=this.getValues().length-1 ;i>=0;i--){
+            selectedValues = getActiveValue(this.getValues()[i])
+            if(!isEmpty(selectedValues)){
+              break
+            }
+          }
+        }else if(!isEmpty(this.activeValue)){
           selectedValues = this.findParentRecodTree(this.activeValue)
         }
       return options && options.length > 0 ? (
       <Menus
           {...menuProps}
           prefixCls={this.prefixCls}
-          ref={this.saveMenu} 
           // disabled={menuDisabled}
           // value={this.state.value}
+          expandTrigger='hover'
           activeValue={selectedValues}
           options={optGroups}
           onSelect={this.handleMenuClick}
-          style={dropdownMenuStyle}
-          visible={true}
+          dropdownMenuColumnStyle={dropdownMenuStyle}
+          visible={this.popup}
         />
     ) : (
       <div key="no_data">
@@ -771,9 +739,19 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
      return activeValue
   }
 
+  // 按键第一个和最后一个的位置
   handleKeyDownFirstLast(e, direction: number) {
     stopEvent(e);
-    if(this.options instanceof DataSet){
+     if(this.options instanceof Array){
+      if(isEmpty(toJS(this.activeValue))){
+        this.setActiveValue(this.options[0])
+      }else{
+        const activeItem = this.findTreeDataFirstLast(this.options,this.activeValue,direction)
+        if (!this.editable || this.popup) {
+          this.setActiveValue(activeItem);
+        }
+      }
+    } else if(this.options instanceof DataSet){
       if(isEmpty(toJS(this.activeValue))){
         this.setActiveValue(this.options.treeData[0])
       }else{
@@ -802,21 +780,27 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     return value
   }
 
-  sameKeyRecordIndex(options:Record[],activeValue:Record){
+  sameKeyRecordIndex(options:Record[],activeValue:Record,valueKey:string){
     const nowIndexList = activeValue.parent ? activeValue.parent.children : options;
-    return nowIndexList!.findIndex(ele => ele.key=== activeValue.key)
+    return nowIndexList!.findIndex(ele => ele[valueKey]=== activeValue[valueKey])
   }
 
+  // 上下按键判断 
   handleKeyDownPrevNext(e, direction: number) {
     if (!this.editable) {
-      if(this.options instanceof DataSet){
+      if(this.options instanceof Array){
+        if(isEmpty(toJS(this.activeValue))){
+          this.setActiveValue(this.options[0])
+        }else{
+          this.setActiveValue(this.findTreeDataUpDown(this.options,this.activeValue,direction,this.sameKeyRecordIndex(this.options,this.activeValue,'value')));
+        }
+      }else if(this.options instanceof DataSet){
         if(isEmpty(toJS(this.activeValue))){
           this.setActiveValue(this.options.treeData[0])
         }else{
-          const {activeValue} = this 
-          this.setActiveValue(this.findTreeDataUpDown(this.options.treeData,this.activeValue,direction,this.sameKeyRecordIndex(this.options.treeData,activeValue)));
+          this.setActiveValue(this.findTreeDataUpDown(this.options.treeData,this.activeValue,direction,this.sameKeyRecordIndex(this.options.treeData,this.activeValue,'key')));
         }
-      }
+      } 
       e.preventDefault();
     } else if (e === KeyCode.DOWN) {
       this.expand();
@@ -840,7 +824,13 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   handleKeyLeftRightNext(e, direction: number) {
      if (!this.editable) {
-      if(this.options instanceof DataSet){
+      if(this.options instanceof Array){
+        if(isEmpty(toJS(this.activeValue))){
+          this.setActiveValue(this.options[0])
+        }else{
+          this.setActiveValue(this.findTreeParentChidren(this.options,this.activeValue,direction));
+        }
+      }else if(this.options instanceof DataSet){
         if(isEmpty(toJS(this.activeValue))){
           this.setActiveValue(this.options.treeData[0])
         }else{
@@ -859,9 +849,11 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       const value = this.activeValue
       if (this.isSelected(value)) {
         this.unChoose(value);
-      } else {
-        this.choose(value);
-      }
+      } else if (value.children){
+          this.setPopup(true);
+        } else {
+          this.choose(value);
+        }
     }
     e.preventDefault();
   }
@@ -937,10 +929,10 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   findByValue(value): Record | undefined {
-    const { valueField,multiple } = this;
+    const { valueField } = this;
     const findTreeItem = (options,valueItem,index) => {
       let sameItemTreeNode
-      if(!multiple && valueItem.length > 0){
+      if(valueItem.length > 0){
           sameItemTreeNode = options.find( ele => {
           return isSameLike(this.getRecordOrObjValue(ele,valueField), valueItem[index])
          })
@@ -993,8 +985,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
         } else if (currentComboOption) {
           currentComboOption.set(textField, value);
           currentComboOption.set(valueField, value);
-        } else {
-          this.createComboOption(value);
         }
       }
     } else {
@@ -1002,19 +992,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     }
   }
 
-  createComboOption(value): void {
-    const { textField, valueField, menu } = this;
-    const record = this.comboOptions.create(
-      {
-        [textField]: value,
-        [valueField]: value,
-      },
-      0,
-    );
-    if (menu) {
-      updateActiveKey(menu, getItemKey(record, value, value));
-    }
-  }
 
   removeComboOptions() {
     this.comboOptions.forEach(record => this.removeComboOption(record));
@@ -1045,7 +1022,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
  
   // 触发下拉框的点击事件
   @autobind
-  handleMenuClick(targetOption, menuIndex, e) {
+  handleMenuClick(targetOption) {
     
     if (!targetOption || targetOption.disabled) {
       return;
@@ -1092,9 +1069,9 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   @action
   setText(text?: string): void {
     super.setText(text);
-    if (this.searchable && isString(this.searchMatcher)) {
-      this.doSearch(text);
-    }
+    // if (this.searchable && isString(this.searchMatcher)) {
+    //   this.doSearch(text);
+    // }
   } 
 
   doSearch = debounce(value => this.searchRemote(value), 500);
@@ -1119,16 +1096,14 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     }
   }
 
-  processRecordToObject(record: Record) {
-    const { primitive, valueField } = this;
+  processRecordToObject(record: Record | ProcessOption) {
+    const { primitive } = this;
     if(record instanceof Record && record.dataSet!.getFromTree(0)){
       return primitive ? this.treeValueToArray(record) :this.treeToArray(record)
     }
     if(record instanceof Object){
       return primitive ? this.treeValueToArray(record): this.treeToArray(record)
     }
-    const result =  primitive ? record.get(valueField) : record.toData();
-    return result
   }
 
   /**
@@ -1136,7 +1111,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
    * @param record 
    * @param allArray 
    */
-  treeValueToArray(record:Record,allArray?:string[]){
+  treeValueToArray(record:Record|ProcessOption,allArray?:string[]){
     const { valueField } = this;
     if(!allArray){
       allArray = []
@@ -1174,7 +1149,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
    * @param record 
    * @param allArray 
    */
-  treeToArray(record:Record,allArray?:string[]){
+  treeToArray(record:Record|ProcessOption,allArray?:ProcessOption[]|Record[]){
     if(!allArray){
       allArray = []
     }
@@ -1193,13 +1168,12 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   processObjectValue(value, textField) {
     if (!isNil(value)) {
+      const found = this.findByValue(value);
+      if (found && value instanceof Array) {
+        return this.treeTextToArray(found);
+      }
       if (isPlainObject(value)) {
         return ObjectChainValue.get(value, textField);
-      }
-      const found = this.findByValue(value);
-      if (found) {
-        if(value instanceof Array)
-        return this.treeTextToArray(found);
       }
     }
   }
@@ -1207,7 +1181,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   processLookupValue(value) {
     const { field, textField, primitive } = this;
     const processvalue = this.processObjectValue(value, textField)
-    if(processvalue instanceof Array){
+    if( processvalue instanceof Array){
       return processvalue.join('/') 
     }
     if (primitive && field ) {
@@ -1216,7 +1190,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
   
   // 处理value
-  processValue(value: any): string {
+  processValue(value: any){
     const text = this.processLookupValue(value);
     if (isEmptyUtil(text)) {
       if (isPlainObject(value)) {
@@ -1234,7 +1208,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     return value;
   }
   
-
   @action
   clear() {
     this.setText(undefined);
@@ -1283,9 +1256,29 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     }
   }
 
+  
+
   @autobind
   chooseAll() {
-    const chooseAll = this.filteredOptions.map(this.processRecordToObject,this)
+    const chooseAll = []
+    if(this.options instanceof Array){
+      const findLeafItem = (option) => {
+        option.forEach((item:Record)=> {
+          if(isEmpty(item.children)){
+            chooseAll.push(this.processRecordToObject(item)) 
+          }else{
+            findLeafItem(item.children)
+          }
+        })
+      }
+      findLeafItem(this.options)
+    }else if(this.options instanceof DataSet){
+      this.options.forEach(item => {
+        if(isEmpty(item.children)){
+          chooseAll.push(this.processRecordToObject(item))
+        }
+      },this)
+    }
     this.setValue(chooseAll);
   }
 
@@ -1317,10 +1310,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       const newValues = values.filter(value => {
         const record = this.findByValue(value);
         if (record) {
-          return true;
-        }
-        if (combo) {
-          this.createComboOption(value);
           return true;
         }
         return false;
