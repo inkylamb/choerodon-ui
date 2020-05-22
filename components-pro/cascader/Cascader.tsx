@@ -12,6 +12,7 @@ import { Menus  } from 'choerodon-ui/lib/rc-components/cascader';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 import { getConfig } from 'choerodon-ui/lib/configure';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
+import cloneDeep from 'lodash/cloneDeep';
 import TriggerField, { TriggerFieldProps } from '../trigger-field/TriggerField';
 import autobind from '../_util/autobind';
 import { ValidationMessages } from '../validator/Validator';
@@ -26,6 +27,7 @@ import * as ObjectChainValue from '../_util/ObjectChainValue';
 import isEmptyUtil from '../_util/isEmpty';
 import isSameLike from '../_util/isSameLike';
 import { OptionProps } from '../option/Option';
+import {ExpandTrigger} from './enum'
 
 export interface OptionObject {
   value:any,
@@ -38,13 +40,24 @@ export interface ProcessOption extends OptionObject{
   disabled?:boolean,
 }
 
+export interface CascaderOptionType {
+  value: string;
+  label: ReactNode;
+  disabled?: boolean;
+  children?: Array<CascaderOptionType>;
+  parent?:Array<CascaderOptionType>;
+  __IS_FILTERED_OPTION?: boolean;
+}
+
 
 const disabledField = '__disabled';
 
 function defaultOnOption({ record }) {
-  return {
-    disabled: record.get(disabledField),
-  };
+  if(record instanceof Record){
+    return {
+      disabled: record.get(disabledField),
+    };
+  }
 }
 
 export function getItemKey(record: Record, text: ReactNode, value: any) {
@@ -75,11 +88,9 @@ export type onOptionProps = { dataSet: DataSet; record: Record };
 
 export interface CascaderProps extends TriggerFieldProps {
   /**
-   * 选项过滤
-   * @param {Record} record
-   * @return {boolean}
+   * 次级菜单的展开方式，可选 'click' 和 'hover'
    */
-  optionsFilter?: (record: Record, index: number, records: Record[]) => boolean;
+  expandTrigger?:ExpandTrigger
   /**
    * 下拉框匹配输入框宽度
    * @default true
@@ -92,7 +103,7 @@ export interface CascaderProps extends TriggerFieldProps {
   /**
    * 选项数据源
    */
-  options?: DataSet;
+  options?: DataSet | CascaderOptionType[] ;
   /**
    * 是否为原始值
    * true - 选项中valueField对应的值
@@ -114,8 +125,32 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
 
   static propTypes = {
     /**
-     * 过滤器
-     * @default false
+     * 次级菜单的展开方式，可选 'click' 和 'hover'
+     */
+    expandTrigger: PropTypes.oneOf([
+      ExpandTrigger.hover,
+      ExpandTrigger.click,
+    ]),
+    /**
+     * 下拉框匹配输入框宽度
+     * @default true
+     */
+    dropdownMatchSelectWidth: PropTypes.bool,
+    /**
+     * 下拉框菜单样式名
+     */
+    dropdownMenuStyle: PropTypes.object,
+    /**
+     * 选项数据源
+     */
+    options:PropTypes.oneOfType([
+      PropTypes.object,
+      PropTypes.arrayOf(PropTypes.object),
+    ]),
+    /**
+     * 是否为原始值
+     * true - 选项中valueField对应的值
+     * false - 选项值对象
      */
     primitiveValue: PropTypes.bool,
     /**
@@ -133,11 +168,14 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     ...TriggerField.defaultProps,
     suffixCls: 'cascader',
     dropdownMatchSelectWidth: false,
+    expandTrigger: ExpandTrigger.click,
     onOption: defaultOnOption,
   };
 
 
   @observable activeValues 
+
+  @observable menuItemWith:number
 
 
   @computed
@@ -145,9 +183,15 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     return this.activeValues;
   }
 
+  @computed
+  get itemMenuWidth():number {
+    return this.menuItemWith
+  }
+
   constructor(props, context) {
     super(props, context);
     this.setActiveValue({})
+    this.setItemMenuWidth(0)
   }
 
   findActiveRecord(value,options){
@@ -178,6 +222,10 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     this.activeValues = activeValues;
   }
 
+  @action
+  setItemMenuWidth(width:number) {
+    this.menuItemWith = width;
+  }
 
   @computed
   get defaultValidationMessages(): ValidationMessages {
@@ -220,7 +268,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
 
   @computed
   get editable(): boolean {
-    return !this.isReadOnly();
+    return false ;
   }
 
 
@@ -273,7 +321,10 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
   @computed
   get primitive(): boolean {
     const type = this.getProp('type');
-    return this.observableProps.primitiveValue !== false && type !== FieldType.object;
+    if(this.options instanceof DataSet){
+      return this.observableProps.primitiveValue !== false && type !== FieldType.object;
+    }
+    return this.observableProps.primitiveValue !== false 
   }
 
   checkValueReaction?: IReactionDisposer;
@@ -333,13 +384,14 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       'multiple',
       'value',
       'name',
-      'options',
-      'optionsFilter',
       'dropdownMatchSelectWidth',
       'dropdownMenuStyle',
       'primitiveValue',
       'notFoundContent',
       'onOption',
+      'expandTrigger',
+      'dropdownMatchSelectWidth',
+      'dropdownMenuStyle',
     ]);
     return otherProps;
   }
@@ -430,7 +482,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       options,
       textField,
       valueField,
-      props: { dropdownMenuStyle, onOption },
+      props: { dropdownMenuStyle,expandTrigger, onOption },
     } = this;
     if (!options) {
       return null;
@@ -441,6 +493,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     const treePropsChange = (treeRecord:ProcessOption[] | Record[]) => {
         let treeRecords:any = []
         if(treeRecord.length > 0){
+          // @ts-ignore
           treeRecords = treeRecord.map((recordItem,index) => {
             const value = this.getRecordOrObjValue(recordItem,valueField);
             const text = this.getRecordOrObjValue(recordItem,textField);
@@ -456,31 +509,36 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
                 children = treePropsChange(recordItem.children)
               }
               return (children ? {
+                ...optionProps,
+                disabled: optionDisabled,
                 key,
                 label:text,
                 value:recordItem,
-                disabled: optionDisabled,
                 children,
               }:{
+                ...optionProps,
+                disabled: optionDisabled,
                 key,
                 label:text,
                 value:recordItem,
-                disabled: optionDisabled,
               })
             }
-              const optionDisabled = recordItem.disabled
+              const optionProps = onOption({ dataSet: options, record: recordItem });
+              const optionDisabled =  recordItem.disabled || optionProps 
               const key: Key = index
               let children: any
               if(recordItem.children){
                 children = treePropsChange(recordItem.children)
               }
               return (children ? {
+                ...optionDisabled,
                 key,
                 label:text,
                 value:recordItem,
-                disabled: optionDisabled,
                 children,
+                disabled: optionDisabled,
               }:{
+                ...optionDisabled,
                 key,
                 label:text,
                 value:recordItem,
@@ -538,18 +596,20 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
           }
         }else if(!isEmpty(this.activeValue)){
           selectedValues = this.findParentRecodTree(this.activeValue)
-        }
+      }
+      let dropdownMenuStyleMerge = dropdownMenuStyle
+      if((this.itemMenuWidth > 0) ){
+        dropdownMenuStyleMerge = {...dropdownMenuStyle,width:pxToRem(this.itemMenuWidth)}
+      }
       return options && options.length > 0 ? (
       <Menus
           {...menuProps}
           prefixCls={this.prefixCls}
-          // disabled={menuDisabled}
-          // value={this.state.value}
-          expandTrigger='hover'
+          expandTrigger={expandTrigger}
           activeValue={selectedValues}
           options={optGroups}
           onSelect={this.handleMenuClick}
-          dropdownMenuColumnStyle={dropdownMenuStyle}
+          dropdownMenuColumnStyle={dropdownMenuStyleMerge}
           visible={this.popup}
         />
     ) : (
@@ -588,13 +648,12 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
   getPopupStyleFromAlign(target): CSSProperties | undefined {
     if (target) {
       if (this.props.dropdownMatchSelectWidth) {
+        this.setItemMenuWidth(target.getBoundingClientRect().width)
         return {
-          width: pxToRem(target.getBoundingClientRect().width),
+          minWidth: pxToRem(target.getBoundingClientRect().width),
         };
       }
-      return {
-        minWidth: pxToRem(target.getBoundingClientRect().width),
-      };
+      return undefined
     }
   }
 
@@ -725,10 +784,12 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
   // 查找相邻的节点
   findTreeParentChidren(options,activeValue,direction){
     if(direction > 0){
-      if(activeValue.children.length > 0){
+      if(activeValue.children && activeValue.children.length > 0){
         return activeValue.children[0]
       }
-    }else if(activeValue.parent){
+      return activeValue
+    }
+    if(activeValue.parent){
         return activeValue.parent
     }
     return activeValue
@@ -765,7 +826,9 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
         this.unChoose(value);
       } else if (value.children){
           this.setPopup(true);
-        } else {
+        } else if(value instanceof Record && !value.get(disabledField)){
+          this.choose(value);
+        }else if(value instanceof Object && !value.disabled){
           this.choose(value);
         }
     }
@@ -805,41 +868,58 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
 
   syncValueOnBlur(value) {
     if (value) {
-      this.options.ready().then(() => {
-        const record = this.findByTextWithValue(value, this.options);
-        if (record) {
-          this.choose(record);
-        }
-      });
+      if(this.options instanceof DataSet){
+        this.options.ready().then(() => {
+          const record = this.findByTextWithValue(value);
+          if (record) {
+            this.choose(record);
+          }
+        });
+      }else{
+        const record = this.findByTextWithValue(value);
+          if (record) {
+            this.choose(record);
+          }
+      }
     } else if (!this.multiple) {
       this.setValue(this.emptyValue);
     }
   }
 
-  findByTextWithValue(text, data: Record[]): Record | undefined {
-    const { textField } = this;
-    const records = [...data, ...this.options].filter(record =>
-      isSameLike(record.get(textField), text),
-    );
-    if (records.length > 1) {
-      const { valueField, primitive } = this;
-      const value = this.getValue();
-      if (value) {
-        const found = records.find(record =>
-          isSameLike(record.get(valueField), primitive ? value : value[valueField]),
-        );
-        if (found) {
-          return found;
-        }
+  findByTextWithValue(text): Record | undefined {
+    if (text) {
+      const found = this.findByText(text)
+      if (found) {
+        return found;
       }
     }
-    return records[0];
   }
 
   findByText(text): Record | undefined {
     const { textField } = this;
-    return this.options.find(record => isSameLike(record.get(textField), text));
+    const findTreeItem = (options,valueItem,index) => {
+      let sameItemTreeNode
+      if(valueItem.length > 0){
+          sameItemTreeNode = options.find( ele => {
+          return isSameLike(this.getRecordOrObjValue(ele,textField), isPlainObject(valueItem[index])? ObjectChainValue.get(valueItem[index],textField):valueItem[index] )
+         })
+         if(sameItemTreeNode){
+          if(sameItemTreeNode.children){
+            return findTreeItem(sameItemTreeNode.children,valueItem,++index)
+          }
+          return sameItemTreeNode
+        }
+      }
+    }
+    const textArray = text.split('/')
+    if(textArray && textArray.length > 0){
+      if(this.options instanceof DataSet){
+        return findTreeItem(this.options.treeData,textArray,0)
+      }
+      return findTreeItem(this.options,textArray,0)
+    }
   }
+
 
   findByValue(value): Record | undefined {
     const { valueField } = this;
@@ -847,7 +927,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       let sameItemTreeNode
       if(valueItem.length > 0){
           sameItemTreeNode = options.find( ele => {
-          return isSameLike(this.getRecordOrObjValue(ele,valueField), valueItem[index])
+          return isSameLike(this.getRecordOrObjValue(ele,valueField), isPlainObject(valueItem[index])? ObjectChainValue.get(valueItem[index],valueField):valueItem[index] )
          })
          if(sameItemTreeNode){
           if(sameItemTreeNode.children){
@@ -1041,13 +1121,23 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       if(record instanceof Record){
         allArray = [record.toData(),...allArray]
       }else{
-        allArray = [record,...allArray]
+        allArray = [this.removeObjParentChild(record),...allArray]
       }
     }
     if(record.parent){
       return this.treeToArray(record.parent,allArray)
     }
     return allArray
+  }
+
+  removeObjParentChild(obj:any){
+    if(isPlainObject(obj)){
+     const cloneObj = cloneDeep(toJS(obj))
+     delete cloneObj.parent
+     delete cloneObj.children
+     return  cloneObj
+    }
+    return obj
   }
 
   processObjectValue(value, textField) {
@@ -1146,7 +1236,8 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     if(this.options instanceof Array){
       const findLeafItem = (option) => {
         option.forEach((item:Record)=> {
-          if(isEmpty(item.children)){
+          if(isEmpty(item.children) && !item.disabled){
+            // @ts-ignore
             chooseAll.push(this.processRecordToObject(item)) 
           }else{
             findLeafItem(item.children)
@@ -1156,7 +1247,8 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       findLeafItem(this.options)
     }else if(this.options instanceof DataSet){
       this.options.forEach(item => {
-        if(isEmpty(item.children)){
+        if(isEmpty(item.children) && !item.get(disabledField)){
+          // @ts-ignore
           chooseAll.push(this.processRecordToObject(item))
         }
       },this)
@@ -1205,14 +1297,6 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
         this.setValue(this.multiple ? newValues : newValues[0]);
       }
     });
-  }
-
-  filterData(data: Record[]): Record[] {
-    const {
-      props: { optionsFilter },
-    } = this;
-    data = optionsFilter ? data.filter(optionsFilter!) : data;
-    return data;
   }
 }
 

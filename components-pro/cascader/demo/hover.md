@@ -1,17 +1,17 @@
 ---
-order: 2
+order: 3
 title:
-  zh-CN: 数据源选项
-  en-US: DataSet Options
+  zh-CN: 鼠标移动上去触发选择
+  en-US: hover
 ---
 
 ## zh-CN
 
-数据源选项。
+鼠标移动上去触发选择
 
 ## en-US
 
-DataSet Options
+hover 
 
 ```jsx
 import { DataSet, Cascader} from 'choerodon-ui/pro';
@@ -48,7 +48,6 @@ class App extends React.Component {
         name: 'id',
         type: 'string',
         textField: 'text',
-        defaultValue:["2", "7"],
         valueField: 'id',
         label: '部门',
         options: this.optionDs,
@@ -62,6 +61,7 @@ class App extends React.Component {
   render() {
     return (
       <Cascader
+          expandTrigger="hover"
           dataSet={this.ds}
           name="id"
       />

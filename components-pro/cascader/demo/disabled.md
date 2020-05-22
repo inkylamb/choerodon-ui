@@ -1,17 +1,17 @@
 ---
-order: 1
+order: 4
 title:
-  zh-CN: 基础受控
-  en-US: controller
+  zh-CN: 选择框禁用
+  en-US: menu item disabled
 ---
 
 ## zh-CN
 
-基础受控。
+选择框禁用
 
 ## en-US
 
-controller
+menu item disabled
 
 ```jsx
 import { Cascader} from 'choerodon-ui/pro';
@@ -36,6 +36,10 @@ const options = [{
     children: [{
       value: 'zhonghuamen',
       meaning: 'Zhong Hua Men',
+      disabled:true,
+    },{
+      value:'fuzimiao',
+      meaning:'Fu Zi Miao'
     }],
   }],
 }];

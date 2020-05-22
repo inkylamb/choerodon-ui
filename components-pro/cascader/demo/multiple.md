@@ -1,17 +1,17 @@
 ---
 order: 2
 title:
-  zh-CN: 数据源选项
-  en-US: DataSet Options
+  zh-CN: 多选
+  en-US: mutiple
 ---
 
 ## zh-CN
 
-数据源选项。
+多选
 
 ## en-US
 
-DataSet Options
+mutiple
 
 ```jsx
 import { DataSet, Cascader} from 'choerodon-ui/pro';
@@ -48,7 +48,7 @@ class App extends React.Component {
         name: 'id',
         type: 'string',
         textField: 'text',
-        defaultValue:["2", "7"],
+        defaultValue:[["2", "7"]],
         valueField: 'id',
         label: '部门',
         options: this.optionDs,
@@ -62,6 +62,7 @@ class App extends React.Component {
   render() {
     return (
       <Cascader
+          multiple
           dataSet={this.ds}
           name="id"
       />
