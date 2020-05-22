@@ -1,8 +1,6 @@
-import React, { CSSProperties, isValidElement, Key, ReactElement, ReactNode } from 'react';
-import PropTypes, { element } from 'prop-types';
+import React, { CSSProperties, isValidElement, Key, ReactNode } from 'react';
+import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
-import debounce from 'lodash/debounce';
-import isString from 'lodash/isString';
 import isEqual from 'lodash/isEqual';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
@@ -13,6 +11,7 @@ import { action, observable, toJS, computed, IReactionDisposer, isArrayLike, rea
 import { Menus  } from 'choerodon-ui/lib/rc-components/cascader';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 import { getConfig } from 'choerodon-ui/lib/configure';
+import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import TriggerField, { TriggerFieldProps } from '../trigger-field/TriggerField';
 import autobind from '../_util/autobind';
 import { ValidationMessages } from '../validator/Validator';
@@ -26,7 +25,6 @@ import { $l } from '../locale-context';
 import * as ObjectChainValue from '../_util/ObjectChainValue';
 import isEmptyUtil from '../_util/isEmpty';
 import isSameLike from '../_util/isSameLike';
-import { Renderer } from '../field/FormField';
 import { OptionProps } from '../option/Option';
 
 export interface OptionObject {
@@ -40,9 +38,6 @@ export interface ProcessOption extends OptionObject{
   disabled?:boolean,
 }
 
-function defaultSearchMatcher({ record, text, textField }) {
-  return record.get(textField).indexOf(text) !== -1;
-}
 
 const disabledField = '__disabled';
 
@@ -77,30 +72,8 @@ function arraySameLike(arr,arrNext):boolean {
 
 export type onOptionProps = { dataSet: DataSet; record: Record };
 
-export type SearchMatcher = string | ((props: SearchMatcherProps) => boolean);
 
-export interface SearchMatcherProps {
-  record: Record;
-  text: string;
-  textField: string;
-  valueField: string;
-}
-
-export interface SelectProps extends TriggerFieldProps {
-  /**
-   * 复合输入值
-   * @default false
-   */
-  combo?: boolean;
-  /**
-   * 可搜索
-   * @default false
-   */
-  searchable?: boolean;
-  /**
-   * 搜索匹配器。 当为字符串时，作为lookup的参数名来重新请求值列表。
-   */
-  searchMatcher?: SearchMatcher;
+export interface CascaderProps extends TriggerFieldProps {
   /**
    * 选项过滤
    * @param {Record} record
@@ -136,28 +109,13 @@ export interface SelectProps extends TriggerFieldProps {
   onOption: (props: onOptionProps) => OptionProps;
 }
 
-export class Select<T extends SelectProps> extends TriggerField<T> {
-  static displayName = 'Select';
+export class Cascader<T extends CascaderProps> extends TriggerField<T> {
+  static displayName = 'Cascader';
 
   static propTypes = {
     /**
-     * 复合输入值
-     * @default false
-     */
-    combo: PropTypes.bool,
-    /**
      * 过滤器
      * @default false
-     */
-    // searchable: PropTypes.bool,
-    /**
-     * 搜索匹配器。 当为字符串时，作为lookup的参数名来重新请求值列表。
-     */
-    // searchMatcher: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    /**
-     * 是否为原始值
-     * true - 选项中valueField对应的值
-     * false - 选项值对象
      */
     primitiveValue: PropTypes.bool,
     /**
@@ -174,13 +132,10 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   static defaultProps = {
     ...TriggerField.defaultProps,
     suffixCls: 'cascader',
-    combo: false,
-    searchable: false,
-    dropdownMatchSelectWidth: true,
+    dropdownMatchSelectWidth: false,
     onOption: defaultOnOption,
   };
 
-  comboOptions: DataSet = new DataSet();
 
   @observable activeValues 
 
@@ -223,11 +178,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     this.activeValues = activeValues;
   }
 
-  @computed
-  get searchMatcher(): SearchMatcher {
-    const { searchMatcher = defaultSearchMatcher } = this.observableProps;
-    return searchMatcher;
-  }
 
   @computed
   get defaultValidationMessages(): ValidationMessages {
@@ -247,28 +197,11 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     return this.getProp('valueField') || 'value';
   }
 
-  get currentComboOption(): Record | undefined {
-    return this.comboOptions.filter(record => !this.isSelected(record))[0];
-  }
-
-  get filteredOptions(): Record[] {
-    const { optionsWithCombo, text } = this;
-    return this.filterData(optionsWithCombo, text);
-  }
-
-  @computed
-  get optionsWithCombo(): Record[] {
-    if(!this.cascadeOptions){
-      return [...this.comboOptions.data]
-    }
-    return [...this.comboOptions.data, ...this.cascadeOptions];
-  }
-
   @computed
   get cascadeOptions(): Record[] {
-    const { record, field, options, searchMatcher } = this;
+    const { record, field, options } = this;
     const { data } = options;
-    if (field && !isString(searchMatcher)) {
+    if (field) {
       const cascadeMap = field.get('cascadeMap');
       if (cascadeMap) {
         if (record) {
@@ -287,14 +220,9 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   @computed
   get editable(): boolean {
-    const { combo } = this.observableProps;
-    return !this.isReadOnly() && (!!this.searchable || !!combo);
+    return !this.isReadOnly();
   }
 
-  @computed
-  get searchable(): boolean {
-    return !!this.props.searchable;
-  }
 
   @computed
   get multiple(): boolean {
@@ -385,33 +313,15 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   componentWillMount() {
     super.componentWillMount();
-    const {  combo } = this.props;
-    if (combo) {
-      this.checkCombo();
-      this.generateComboOption(this.getValue());
-    }
   }
 
   componentWillUnmount() {
     super.componentWillUnmount();
-    this.doSearch.cancel();
     this.clearReaction();
   }
 
   componentWillReceiveProps(nextProps, nextContext) {
     super.componentWillReceiveProps(nextProps, nextContext);
-    const { combo } = this.props;
-
-    if (combo && !nextProps.combo) {
-      this.removeComboOptions();
-      this.clearCheckCombo();
-    }
-    if (!combo && nextProps.combo) {
-      this.checkCombo();
-      if ('value' in nextProps) {
-        this.generateComboOption(nextProps.value);
-      }
-    }
   }
 
   componentDidUpdate() {
@@ -420,9 +330,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   getOtherProps() {
     const otherProps = omit(super.getOtherProps(), [
-      'searchable',
-      'searchMatcher',
-      'combo',
       'multiple',
       'value',
       'name',
@@ -442,9 +349,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       ...super.getObservableProps(props, context),
       children: props.children,
       options: props.options,
-      combo: props.combo,
       primitiveValue: props.primitiveValue,
-      searchMatcher: props.searchMatcher,
     };
   }
 
@@ -680,8 +585,17 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   @autobind
-  getPopupStyleFromAlign(): CSSProperties | undefined {
-    return undefined;
+  getPopupStyleFromAlign(target): CSSProperties | undefined {
+    if (target) {
+      if (this.props.dropdownMatchSelectWidth) {
+        return {
+          width: pxToRem(target.getBoundingClientRect().width),
+        };
+      }
+      return {
+        minWidth: pxToRem(target.getBoundingClientRect().width),
+      };
+    }
   }
 
   getTriggerIconFont() {
@@ -883,17 +797,16 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   expand() {
-    const { filteredOptions } = this;
-    if (filteredOptions && filteredOptions.length) {
+    const { options } = this;
+    if (options && options.length) {
       super.expand();
     }
   }
 
   syncValueOnBlur(value) {
     if (value) {
-      const { data } = this.comboOptions;
       this.options.ready().then(() => {
-        const record = this.findByTextWithValue(value, data);
+        const record = this.findByTextWithValue(value, this.options);
         if (record) {
           this.choose(record);
         }
@@ -905,7 +818,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   findByTextWithValue(text, data: Record[]): Record | undefined {
     const { textField } = this;
-    const records = [...data, ...this.filteredOptions].filter(record =>
+    const records = [...data, ...this.options].filter(record =>
       isSameLike(record.get(textField), text),
     );
     if (records.length > 1) {
@@ -925,7 +838,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   findByText(text): Record | undefined {
     const { textField } = this;
-    return this.optionsWithCombo.find(record => isSameLike(record.get(textField), text));
+    return this.options.find(record => isSameLike(record.get(textField), text));
   }
 
   findByValue(value): Record | undefined {
@@ -970,7 +883,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   generateComboOption(value: string | any[], callback?: (text: string) => void): void {
-    const { currentComboOption, textField, valueField } = this;
+    const { textField } = this;
     if (value) {
       if (isArrayLike(value)) {
         value.forEach(v => !isNil(v) && this.generateComboOption(v));
@@ -981,30 +894,12 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
           if (text !== value && callback) {
             callback(text);
           }
-          this.removeComboOption();
-        } else if (currentComboOption) {
-          currentComboOption.set(textField, value);
-          currentComboOption.set(valueField, value);
         }
       }
-    } else {
-      this.removeComboOption();
     }
   }
 
 
-  removeComboOptions() {
-    this.comboOptions.forEach(record => this.removeComboOption(record));
-  }
-
-  removeComboOption(record?: Record): void {
-    if (!record) {
-      record = this.currentComboOption;
-    }
-    if (record && !this.isSelected(record)) {
-      this.comboOptions.remove(record);
-    }
-  }
 
   handlePopupAnimateAppear() {}
 
@@ -1069,19 +964,8 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   @action
   setText(text?: string): void {
     super.setText(text);
-    // if (this.searchable && isString(this.searchMatcher)) {
-    //   this.doSearch(text);
-    // }
   } 
 
-  doSearch = debounce(value => this.searchRemote(value), 500);
-
-  searchRemote(value) {
-    const { field, searchMatcher } = this;
-    if (field && isString(searchMatcher)) {
-      field.setLovPara(searchMatcher, value === '' ? undefined : value);
-    }
-  }
 
   @autobind
   @action
@@ -1212,7 +1096,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   clear() {
     this.setText(undefined);
     super.clear();
-    this.removeComboOptions();
   }
 
   addValue(...values) {
@@ -1231,7 +1114,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
 
   resetFilter() {
     this.setText(undefined);
-    this.removeComboOption();
     this.forcePopupAlign();
   }
 
@@ -1296,14 +1178,12 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
   }
 
   async processSelectedData() {
-    this.comboOptions.removeAll();
     const values = this.getValues();
     const { field } = this;
     if (field) {
       await field.ready();
     }
     const {
-      filteredOptions,
       observableProps: { combo },
     } = this;
     runInAction(() => {
@@ -1320,7 +1200,6 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       if (
         field &&
         field.get('cascadeMap') &&
-        filteredOptions.length &&
         !isEqual(newValues, values)
       ) {
         this.setValue(this.multiple ? newValues : newValues[0]);
@@ -1328,23 +1207,16 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
     });
   }
 
-  filterData(data: Record[], text?: string): Record[] {
+  filterData(data: Record[]): Record[] {
     const {
-      textField,
-      valueField,
-      searchable,
-      searchMatcher,
       props: { optionsFilter },
     } = this;
     data = optionsFilter ? data.filter(optionsFilter!) : data;
-    if (searchable && text && typeof searchMatcher === 'function') {
-      return data.filter(record => searchMatcher({ record, text, textField, valueField }));
-    }
     return data;
   }
 }
 
 @observer
-export default class ObserverSelect extends Select<SelectProps> {
-  static defaultProps = Select.defaultProps;
+export default class ObserverCascader extends Cascader<CascaderProps> {
+  static defaultProps = Cascader.defaultProps;
 }

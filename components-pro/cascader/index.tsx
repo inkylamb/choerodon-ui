@@ -1,3 +1,3 @@
-import ObserverSelect from './Select';
+import ObserverCascader from './Cascader';
 
-export default ObserverSelect;
+export default ObserverCascader;
