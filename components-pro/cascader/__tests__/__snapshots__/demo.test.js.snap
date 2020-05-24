@@ -1,109 +1,211 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders ./components-pro/email-field/demo/basic.md correctly 1`] = `
-<div
-  class="c7n-row"
-  style="margin-left:-5px;margin-right:-5px"
->
-  <div
-    class="c7n-col-8"
-    style="padding-left:5px;padding-right:5px"
-  >
-    <span
-      class="c7n-pro-input-wrapper c7n-pro-input-empty"
-    >
-      <label>
-        <input
-          autocomplete="off"
-          class="c7n-pro-input"
-          placeholder="请输入"
-          type="email"
-          value=""
-        />
-      </label>
-    </span>
-    <span />
-  </div>
-  <div
-    class="c7n-col-8"
-    style="padding-left:5px;padding-right:5px"
-  >
-    <span
-      class="c7n-pro-input-wrapper"
-    >
-      <label>
-        <input
-          autocomplete="off"
-          class="c7n-pro-input"
-          placeholder="清除按钮"
-          type="email"
-          value="点击清除"
-        />
-        <div
-          class="c7n-pro-input-inner-button c7n-pro-input-clear-button"
-        >
-          <i
-            class="icon icon-close"
-          />
-        </div>
-      </label>
-    </span>
-    <span />
-  </div>
-  <div
-    class="c7n-col-8"
-    style="padding-left:5px;padding-right:5px"
-  >
-    <span
-      class="c7n-pro-input-wrapper c7n-pro-input-disabled"
-    >
-      <label>
-        <input
-          autocomplete="off"
-          class="c7n-pro-input"
-          disabled=""
-          readonly=""
-          type="email"
-          value="不可用"
-        />
-      </label>
-    </span>
-    <span />
-  </div>
-</div>
-`;
-
-exports[`renders ./components-pro/email-field/demo/controlled.md correctly 1`] = `
+exports[`renders ./components-pro/cascader/demo/basic.md correctly 1`] = `
 Array [
   <span
-    class="c7n-pro-input-wrapper"
+    class="c7n-pro-cascader-wrapper c7n-pro-cascader-suffix-button c7n-pro-cascader-not-editable"
   >
+    <input
+      name="id"
+      type="hidden"
+      value="2/7"
+    />
     <label>
       <input
         autocomplete="off"
-        class="c7n-pro-input"
-        type="email"
-        value="abc@123.com"
+        class="c7n-pro-cascader"
+        readonly=""
+        type="text"
+        value="2,7"
       />
+      <div
+        class="c7n-pro-cascader-inner-button c7n-pro-cascader-clear-button"
+      >
+        <i
+          class="icon icon-close"
+        />
+      </div>
+      <div
+        class="c7n-pro-cascader-suffix"
+      >
+        <i
+          class="icon icon-baseline-arrow_drop_down c7n-pro-cascader-trigger"
+        />
+      </div>
     </label>
   </span>,
   <span />,
 ]
 `;
 
-exports[`renders ./components-pro/email-field/demo/dataset.md correctly 1`] = `
+exports[`renders ./components-pro/cascader/demo/basicController.md correctly 1`] = `
 Array [
   <span
-    class="c7n-pro-input-wrapper c7n-pro-input-required"
+    class="c7n-pro-cascader-wrapper c7n-pro-cascader-suffix-button c7n-pro-cascader-not-editable"
   >
+    <input
+      type="hidden"
+      value="zhejiang/hangzhou/xihu"
+    />
     <label>
       <input
         autocomplete="off"
-        class="c7n-pro-input"
-        name="email"
-        type="email"
-        value="123@abc.com"
+        class="c7n-pro-cascader"
+        options="[object Object],[object Object]"
+        placeholder="Please select"
+        readonly=""
+        type="text"
+        value="Zhejiang/Hangzhou/West Lake"
       />
+      <div
+        class="c7n-pro-cascader-inner-button c7n-pro-cascader-clear-button"
+      >
+        <i
+          class="icon icon-close"
+        />
+      </div>
+      <div
+        class="c7n-pro-cascader-suffix"
+      >
+        <i
+          class="icon icon-baseline-arrow_drop_down c7n-pro-cascader-trigger"
+        />
+      </div>
+    </label>
+  </span>,
+  <span />,
+]
+`;
+
+exports[`renders ./components-pro/cascader/demo/disabled.md correctly 1`] = `
+Array [
+  <span
+    class="c7n-pro-cascader-wrapper c7n-pro-cascader-suffix-button c7n-pro-cascader-not-editable"
+  >
+    <input
+      type="hidden"
+      value="zhejiang/hangzhou/xihu"
+    />
+    <label>
+      <input
+        autocomplete="off"
+        class="c7n-pro-cascader"
+        options="[object Object],[object Object]"
+        placeholder="Please select"
+        readonly=""
+        type="text"
+        value="Zhejiang/Hangzhou/West Lake"
+      />
+      <div
+        class="c7n-pro-cascader-inner-button c7n-pro-cascader-clear-button"
+      >
+        <i
+          class="icon icon-close"
+        />
+      </div>
+      <div
+        class="c7n-pro-cascader-suffix"
+      >
+        <i
+          class="icon icon-baseline-arrow_drop_down c7n-pro-cascader-trigger"
+        />
+      </div>
+    </label>
+  </span>,
+  <span />,
+]
+`;
+
+exports[`renders ./components-pro/cascader/demo/hover.md correctly 1`] = `
+Array [
+  <span
+    class="c7n-pro-cascader-wrapper c7n-pro-cascader-empty c7n-pro-cascader-suffix-button c7n-pro-cascader-not-editable"
+  >
+    <input
+      name="id"
+      type="hidden"
+      value=""
+    />
+    <label>
+      <input
+        autocomplete="off"
+        class="c7n-pro-cascader"
+        readonly=""
+        type="text"
+        value=""
+      />
+      <div
+        class="c7n-pro-cascader-inner-button c7n-pro-cascader-clear-button"
+      >
+        <i
+          class="icon icon-close"
+        />
+      </div>
+      <div
+        class="c7n-pro-cascader-suffix"
+      >
+        <i
+          class="icon icon-baseline-arrow_drop_down c7n-pro-cascader-trigger"
+        />
+      </div>
+    </label>
+  </span>,
+  <span />,
+]
+`;
+
+exports[`renders ./components-pro/cascader/demo/multiple.md correctly 1`] = `
+Array [
+  <span
+    class="c7n-pro-cascader-wrapper c7n-pro-cascader-suffix-button c7n-pro-cascader-multiple c7n-pro-cascader-not-editable"
+  >
+    <input
+      class="c7n-pro-cascader-multiple-value"
+      name="id"
+      value="2,7"
+    />
+    <label>
+      <div
+        class="c7n-pro-cascader"
+      >
+        <ul>
+          <li
+            class="c7n-pro-cascader-multiple-block"
+          >
+            <div>
+              2,7
+            </div>
+            <i
+              class="icon icon-cancel"
+              tabindex="-1"
+            />
+          </li>
+          <li>
+            <input
+              autocomplete="off"
+              class="c7n-pro-cascader-multiple-input"
+              readonly=""
+              style="position:absolute;left:0;top:0;z-index:-1"
+              type="text"
+              value=""
+            />
+          </li>
+        </ul>
+      </div>
+      <div
+        class="c7n-pro-cascader-inner-button c7n-pro-cascader-clear-button"
+      >
+        <i
+          class="icon icon-close"
+        />
+      </div>
+      <div
+        class="c7n-pro-cascader-suffix"
+      >
+        <i
+          class="icon icon-baseline-arrow_drop_down c7n-pro-cascader-trigger"
+        />
+      </div>
     </label>
   </span>,
   <span />,

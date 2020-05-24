@@ -27,8 +27,7 @@ function handleDataSetChange({ record, name, value, oldValue }) {
   );
 }
 
-class App extends React.Component {
-  optionDs = new DataSet({
+const optionDs = new DataSet({
     queryUrl: '/tree-less.mock',
     autoQuery: true,
     selection: 'mutiple',
@@ -41,6 +40,9 @@ class App extends React.Component {
     ],
   });
 
+class App extends React.Component {
+  
+
   ds = new DataSet({
     autoCreate:true,
     fields: [
@@ -50,7 +52,7 @@ class App extends React.Component {
         textField: 'text',
         valueField: 'id',
         label: '部门',
-        options: this.optionDs,
+        options: optionDs,
       },
     ],
     events: {

@@ -1,11 +1,10 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import Select from '..';
+import Cascader from '..';
 import DataSet from '../../data-set';
 
-const { Option } = Select;
 
-describe('Select', () => {
+describe('Cascader', () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -162,7 +161,7 @@ describe('Select', () => {
     ]
     const optionDs = new DataSet({
       data:lessTreeMock,
-      autoQuery: true,
+      autoCreat: true,
       selection: 'mutiple',
       parentField: 'parentId',
       idField: 'id',
@@ -191,11 +190,10 @@ describe('Select', () => {
       },
     });
     const wrapper = mount(
-      <Select dataSet={ds} name="user">
-        <Option value="jack">Jack</Option>
-        <Option value="lucy">Lucy</Option>
-        <Option value="wu">Wu</Option>
-      </Select>,
+      <Cascader
+          dataSet={ds}
+          name="id"
+      />,
     );
     jest.runAllTimers();
     expect(
@@ -203,31 +201,38 @@ describe('Select', () => {
         .find('input')
         .at(0)
         .prop('value'),
-    ).toBe('wu');
+    ).toBe('2/7');
   });
   it('dataset set value render right number item', () => {
     const handleDataSetChange = jest.fn();
-    const data = [
-      {
-        user: 'wu',
-      },
-    ];
-    const ds = new DataSet({
-      data,
-      fields: [{ name: 'user', type: 'string', textField: 'text', label: '用户' }],
-      events: {
-        update: handleDataSetChange,
-      },
-    });
+    const options = [{
+      value: 'zhejiang',
+      meaning: 'Zhejiang',
+      children: [{
+        value: 'hangzhou',
+        meaning: 'Hangzhou',
+        children: [{
+          value: 'xihu',
+          meaning: 'West Lake',
+        }],
+      }],
+    }, {
+      value: 'jiangsu',
+      meaning: 'Jiangsu',
+      children: [{
+        value: 'nanjing',
+        meaning: 'Nanjing',
+        children: [{
+          value: 'zhonghuamen',
+          meaning: 'Zhong Hua Men',
+        }],
+      }],
+    }];
     const wrapper = mount(
-      <Select dataSet={ds} name="user">
-        <Option value="jack">Jack</Option>
-        <Option value="lucy">Lucy</Option>
-        <Option value="wu">Wu</Option>
-      </Select>,
+      <Cascader value={["zhejiang", "hangzhou", "xihu"]} options={options} onChange={handleDataSetChange} placeholder="Please select" />,
     );
-    wrapper.find('.c7n-pro-select').simulate('click');
+    wrapper.find('.c7n-pro-cascader').simulate('click');
     jest.runAllTimers();
-    expect(wrapper.find('MenuItem').length).toBe(3);
+    expect(wrapper.find('Menus').length).toBe(1);
   });
 });
