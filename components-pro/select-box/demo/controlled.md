@@ -35,7 +35,7 @@ class App extends React.Component {
 
   render() {
     return (
-      <SelectBox value={this.state.value} onChange={this.handleChange}>
+      <SelectBox readOnly value={this.state.value} onChange={this.handleChange}>
         <Option value="jack">Jack</Option>
         <Option value="lucy">Lucy</Option>
         <Option value="wu">Wu</Option>

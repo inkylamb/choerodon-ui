@@ -28,6 +28,7 @@ export interface TableHeaderCellProps extends ElementProps {
   rowSpan?: number;
   colSpan?: number;
   getHeaderNode: () => HTMLTableSectionElement | null;
+  isLastColumn?:boolean;
 }
 
 @observer
@@ -180,14 +181,16 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
         node: { resizeLine },
       },
     } = this.context;
+    const {isLastColumn} = this.props   
     const { left: rectLeft, width } = resizeLine.offsetParent.getBoundingClientRect();
     left -= rectLeft;
     if (left < 0) {
       left = 0;
-    } else if (left >= width) {
+    } else if (left >= width && !isLastColumn) {
       left = width - 1;
     }
-    resizeLine.style.left = pxToRem(left) || null;
+    resizeLine.style.left = isLastColumn && left >= width ? width - 1 : pxToRem(left) || null ;
+    
     return left + rectLeft;
   }
 

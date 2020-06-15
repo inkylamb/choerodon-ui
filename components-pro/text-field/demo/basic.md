@@ -23,13 +23,7 @@ function log(value) {
 ReactDOM.render(
   <Row gutter={10}>
     <Col span={8}>
-      <TextField placeholder="请输入" onChange={log} />
-    </Col>
-    <Col span={8}>
-      <TextField placeholder="清除按钮" defaultValue="点击清除" clearButton onChange={log} />
-    </Col>
-    <Col span={8}>
-      <TextField value="不可用" disabled />
+      <TextField readOnly={true} placeholder="请输入" onChange={log} />
     </Col>
   </Row>,
   mountNode

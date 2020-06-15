@@ -3,6 +3,7 @@ order: 0
 title:
   zh-CN: 基本
   en-US: Basic
+only: true
 ---
 
 ## zh-CN
@@ -21,6 +22,7 @@ import {
   DateTimePicker,
   SelectBox,
   Modal,
+  TextArea,
   Button,
   notification,
   AutoComplete,
@@ -414,35 +416,8 @@ class App extends React.Component {
           }
         }}
       >
-        <Column
-          name="userid"
-          header={renderColumnHeader}
-          style={{ color: 'red' }}
-          tooltip="overflow"
-          editor
-          width={200}
-          minWidth={150}
-          lock
-          sortable
-        />
-        <Column name="age" editor width={150} sortable footer={renderColumnFooter} />
-        <Column name="email" editor={() => { return <AutoComplete onFocus={this.handeValueChange} onInput={this.handeValueChange} options={this.options} /> }} />
-        <Column name="enable" editor width={50} minWidth={50} lock />
-        <Column name="name" editor width={150} sortable tooltip="always" />
-        <Column name="code" editor width={150} sortable />
-        <Column name="code_code" editor width={150} tooltip="overflow" />
-        <Column name="code_select" editor width={150} />
-        <Column name="codeMultiple" editor width={150} />
-        <Column name="codeMultiple_code" width={150} />
-        <Column name="sex" editor={<SelectBox />} width={150} />
-        <Column header="性别id" renderer={sexIdRenderer} />
-        <Column name="sexMultiple" editor width={150} />
-        <Column name="accountMultiple" editor width={150} />
-        <Column name="date.startDate" editor width={150} />
-        <Column name="date.endDate" editor width={150} />
-        <Column header="时间" name="time" editor={<DateTimePicker />} width={150} />
-        <Column name="numberMultiple" editor width={150} minWidth={50} />
-        <Column name="frozen" editor width={50} minWidth={50} lock="right" />
+        <Column name="sex" editor={<TextArea autoFocus />} width={150} />
+
       </Table>
     );
   }

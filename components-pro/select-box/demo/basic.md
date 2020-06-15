@@ -33,7 +33,7 @@ class App extends React.Component {
     return (
       <Row gutter={10}>
         <Col span={8}>
-          <SelectBox onChange={handleChange}>
+          <SelectBox readOnly onChange={handleChange}>
             <Option value="jack">Jack</Option>
             <Option value="lucy">Lucy</Option>
             {this.state.visible && (

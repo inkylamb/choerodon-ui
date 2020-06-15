@@ -55,7 +55,9 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
     const trs = rows.map((row, rowIndex) => {
       if (row.length) {
         let prevColumn: ColumnProps | undefined;
+        let columnIndex:number = 0
         const tds = row.map(({ hidden, column, rowSpan, colSpan, lastLeaf }) => {
+          columnIndex++
           if (!hidden) {
             const props: TableHeaderCellProps = {
               key: getColumnKey(column),
@@ -65,6 +67,7 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
               column,
               resizeColumn: lastLeaf,
               getHeaderNode: this.getHeaderNode,
+              isLastColumn:columnIndex === row.length,
             };
             if (rowSpan > 1) {
               props.rowSpan = rowSpan;

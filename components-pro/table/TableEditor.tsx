@@ -169,7 +169,7 @@ export default class TableEditor extends Component<TableEditorProps> {
       const props: any = {
         className: `${prefixCls}-editor`,
       };
-      const editorProps: any = {};
+      const editorProps: any = {...editor.props};
       const { tableStore } = this.context;
       if (tableStore.currentEditorName === name || tableStore.currentEditRecord) {
         this.currentEditorName = name;
