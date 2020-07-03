@@ -34,10 +34,7 @@ function sexIdRenderer({ record }) {
 }
 
 function handleUserDSLoad({ dataSet }) {
-  const first = dataSet.get(0);
-  if (first) {
-    first.selectable = false;
-  }
+  console.log(dataSet)
 }
 
 function renderColumnFooter(dataset, name) {
@@ -108,6 +105,7 @@ class App extends React.Component {
     primaryKey: 'userid',
     name: 'user',
     autoQuery: true,
+    autoLocateFirst:false,
     pageSize: 5,
     transport: {
       read: {
@@ -405,7 +403,6 @@ class App extends React.Component {
         dataSet={this.userDs}
         autoMaxWidth={true}
         header="User"
-        style={{ height: 200 }}
         onRow={({ dataSet, record, index, expandedRow }) => {
           if (index === 2) {
             return {

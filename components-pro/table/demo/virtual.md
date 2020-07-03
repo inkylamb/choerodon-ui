@@ -177,8 +177,7 @@ class App extends React.Component {
     
     return (
       <Table
-        key="user"
-        virtual
+        key="user"  
         selectionMode='click'
         dataSet={this.userDs}
         style={{ height: 300 }}

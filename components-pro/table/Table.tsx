@@ -11,7 +11,8 @@ import isObject from 'lodash/isObject';
 import noop from 'lodash/noop';
 import classes from 'component-classes';
 import { action } from 'mobx';
-import { getConfig } from 'choerodon-ui/lib/configure';
+import { DragDropContext } from 'react-beautiful-dnd';
+import { getConfig, getProPrefixCls } from 'choerodon-ui/lib/configure';
 import warning from 'choerodon-ui/lib/_util/warning';
 import { pxToRem, toPx } from 'choerodon-ui/lib/_util/UnitConvertor';
 import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
@@ -118,6 +119,42 @@ export interface TableSpinConfig extends SpinProps {
   spinning?: boolean;
   indicator?: SpinIndicator;
 }
+
+export interface Instance {
+  tbody:HTMLElement;
+  headtr:HTMLElement;
+}
+
+// 构造一个单例table来防止body下不能有table元素的报错
+export const instance:Instance = (function(){
+  let _instance;
+  // Using a table as the portal so that we do not get react
+  // warnings when mounting a tr element
+  const _tableContain = () => {
+    const table: HTMLElement = document.createElement('table');
+      table.classList.add('my-super-cool-table-portal');
+      const thead: HTMLElement = document.createElement('thead');
+      thead.classList.add(`${getProPrefixCls('table')}-thead`)
+      table.appendChild(thead);
+      const headtr: HTMLElement = document.createElement('tr');
+      thead.appendChild(headtr);
+      const tbody: HTMLElement = document.createElement('tbody');
+      tbody.classList.add(`${getProPrefixCls('table')}-tbody`)
+      table.appendChild(tbody);
+      if (!document.body) {
+        throw new Error('document.body required a body to append');
+      }
+    document.body.appendChild(table);
+    return {
+      tbody,
+      headtr,
+    }
+  }
+  if(_instance){
+    return _instance 
+  }
+  return _instance = _tableContain()
+})();
 
 export interface TableProps extends DataSetComponentProps {
   columns?: ColumnProps[];
@@ -804,6 +841,7 @@ export default class Table extends DataSetComponent<TableProps> {
     const styleHeight = style ? toPx(style.height) : 0;
 
     return (
+      
       <ReactResizeObserver resizeProp="width" onResize={this.handleResize}>
         <div {...this.getWrapperProps()}>
           <TableContext.Provider value={context}>
@@ -853,6 +891,39 @@ export default class Table extends DataSetComponent<TableProps> {
         </div>
       </ReactResizeObserver>
     );
+  }
+
+  @action
+  reorderDataSet(dataset: DataSet, startIndex: number, endIndex: number){
+    dataset.move(startIndex, endIndex)
+  };
+
+  @action
+  reorderColumns(columns: ColumnProps[], startIndex: number, endIndex: number){
+   const [removed] = columns.splice(startIndex, 1)
+    if(columns.length){
+      columns.splice(endIndex, 0, removed);
+    }
+  };
+
+  @autobind
+  onDragEnd(resultDrag) {
+    if(resultDrag && resultDrag.destination){
+      if (resultDrag.destination.droppableId === 'table') {
+        this.reorderDataSet(
+          this.tableStore.dataSet,
+          resultDrag.source.index,
+          resultDrag.destination.index,
+        );
+      }
+      if(resultDrag.destination.droppableId === "tableHeader"){
+        this.reorderColumns(
+          this.tableStore.columns,
+          resultDrag.source.index,
+          resultDrag.destination.index,
+        );
+      }
+    }
   }
 
   @autobind
@@ -1238,7 +1309,11 @@ export default class Table extends DataSetComponent<TableProps> {
       prefixCls,
       props: { indentSize },
     } = this;
-    return <TableTBody key="tbody" prefixCls={prefixCls} lock={lock} indentSize={indentSize!} />;
+    return (
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <TableTBody key="tbody" prefixCls={prefixCls} lock={lock} indentSize={indentSize!} />
+      </DragDropContext>
+    );
   }
 
   getTableHeader(lock?: ColumnLock | boolean): ReactNode {
@@ -1246,7 +1321,11 @@ export default class Table extends DataSetComponent<TableProps> {
       prefixCls,
       props: { dataSet },
     } = this;
-    return <TableHeader key="thead" prefixCls={prefixCls} lock={lock} dataSet={dataSet} />;
+    return (
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <TableHeader key="thead" prefixCls={prefixCls} lock={lock} dataSet={dataSet} />
+      </DragDropContext>
+    );
   }
 
   getTableFooter(lock?: ColumnLock | boolean): ReactNode {

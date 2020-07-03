@@ -7,6 +7,10 @@ import debounce from 'lodash/debounce';
 import defaultTo from 'lodash/defaultTo';
 import isString from 'lodash/isString';
 import classes from 'component-classes';
+import {
+  DraggableProvided,
+  DraggableStateSnapshot,
+} from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import { ColumnProps, minColumnWidth } from './Column';
 import TableContext from './TableContext';
@@ -28,6 +32,8 @@ export interface TableHeaderCellProps extends ElementProps {
   rowSpan?: number;
   colSpan?: number;
   getHeaderNode: () => HTMLTableSectionElement | null;
+  snapshot: DraggableStateSnapshot,
+  provided: DraggableProvided;
 }
 
 @observer
@@ -215,7 +221,7 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
   }
 
   render() {
-    const { column, prefixCls, dataSet, rowSpan, colSpan } = this.props;
+    const { column, prefixCls, dataSet, rowSpan, colSpan,snapshot, provided  } = this.props;
     const {
       tableStore: { rowHeight, columnResizable },
     } = this.context;
@@ -295,6 +301,13 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
         className={classList.join(' ')}
         style={omit(cellStyle, ['width', 'height'])}
         rowSpan={rowSpan}
+        ref= {(ref)=>{
+          if(ref){
+            provided.innerRef(ref)
+          }
+        }}
+        {...provided.draggableProps}
+        {...provided.dragHandleProps}
         colSpan={colSpan}
         data-index={getColumnKey(column)}
       >

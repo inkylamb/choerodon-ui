@@ -1,5 +1,5 @@
 import React, { Children, isValidElement, ReactNode } from 'react';
-import { action, computed, observable, runInAction } from 'mobx';
+import { action, set, computed, observable, runInAction } from 'mobx';
 import isNil from 'lodash/isNil';
 import isPlainObject from 'lodash/isPlainObject';
 import defer from 'lodash/defer';
@@ -404,6 +404,12 @@ export default class TableStore {
         this.addSelectionColumn(columns ? mergeDefaultProps(columns) : normalizeColumns(children)),
       ),
     );
+  }
+
+  set columns(columns: ColumnProps[]){
+    runInAction(() => {
+      set(this.props, 'columns', columns);
+    });
   }
 
   @computed

@@ -4,6 +4,14 @@ import { observer } from 'mobx-react';
 import { action, computed } from 'mobx';
 import classes from 'component-classes';
 import raf from 'raf';
+import {
+  Droppable,
+  Draggable,
+  DraggableProvided,
+  DraggableStateSnapshot,
+  DroppableProvided,
+  DraggableRubric,
+} from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import ReactResizeObserver from 'choerodon-ui/lib/_util/resizeObserver';
 import { ColumnProps } from './Column';
@@ -15,6 +23,7 @@ import { ColumnLock } from './enum';
 import ExpandedRow from './ExpandedRow';
 import { DataSetStatus } from '../data-set/enum';
 import autobind from '../_util/autobind';
+import { instance } from './Table'
 
 export interface TableTBodyProps extends ElementProps {
   lock?: ColumnLock | boolean;
@@ -36,7 +45,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
 
   static contextType = TableContext;
 
-  tableBody: HTMLTableSectionElement | null;
+  tableBody: HTMLElement | null;
 
   nextFrameActionId?: number;
 
@@ -50,6 +59,12 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
     if (lock) {
       return tableStore.leftLeafColumns.filter(({ hidden }) => !hidden);
     }
+    return tableStore.leafColumns.filter(({ hidden }) => !hidden);
+  }
+
+  @computed
+  get leafColumnsBody(): ColumnProps[] {
+    const { tableStore } = this.context;
     return tableStore.leafColumns.filter(({ hidden }) => !hidden);
   }
 
@@ -81,27 +96,65 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
   }
 
   render() {
-    const { prefixCls, lock } = this.props;
-    const { leafColumns } = this;
+    const { prefixCls, lock ,indentSize} = this.props;
+    const { leafColumns,leafColumnsBody } = this;
     const {
-      tableStore: { data, props: { virtual }, height },
+      tableStore: { data, props: { virtual },dataSet, height },
     } = this.context;
     const rowData = virtual && height ? this.processData() : data;
     const rows = data.length
       ? this.getRows(rowData, leafColumns, true, lock)
       : this.getEmptyRow(leafColumns, lock);
     const body = (
-      <tbody ref={lock ? undefined : this.saveRef} className={`${prefixCls}-tbody`}>
+      <Droppable
+        droppableId="table"
+        key="table"
+        renderClone={(
+          provided: DraggableProvided,
+          snapshot: DraggableStateSnapshot,
+          rubric: DraggableRubric,
+        ) => {
+          const record = dataSet.get(rubric.source.index)
+          return (
+            <TableRow
+              provided={provided}
+              snapshot={snapshot}
+              key={record.id}
+              hidden={false}
+              lock={false}
+              indentSize={indentSize}
+              prefixCls={prefixCls}
+              columns={leafColumnsBody}
+              record={record}
+              index={record.id}
+            />
+          );
+        }}
+        getContainerForClone={() => instance.tbody}
+      >
+      {(droppableProvided: DroppableProvided) => (
+        <tbody
+          ref={(ref:HTMLElement) => {
+          if(ref){
+            this.saveRef(ref)
+            droppableProvided.innerRef(ref);
+          }
+        }}
+        {...droppableProvided.droppableProps}
+        className={`${prefixCls}-tbody`}>
         {rows}
+        {droppableProvided.placeholder}
       </tbody>
+      )}
+     </Droppable>
     );
     return lock ? (
       body
     ) : (
-      <ReactResizeObserver onResize={this.handleResize} resizeProp="height">
-        {body}
-      </ReactResizeObserver>
-    );
+        <ReactResizeObserver onResize={this.handleResize} resizeProp="height">
+          {body}
+        </ReactResizeObserver>
+      );
   }
 
   componentDidUpdate() {
@@ -135,12 +188,12 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
     const { prefixCls } = this.props;
     const style: CSSProperties = width
       ? {
-          marginLeft: pxToRem(width / 2),
-        }
+        marginLeft: pxToRem(width / 2),
+      }
       : {
-          transform: 'none',
-          display: 'inline-block',
-        };
+        transform: 'none',
+        display: 'inline-block',
+      };
     const tdStyle: CSSProperties = width ? {} : { textAlign: 'center' };
     return (
       <tr className={`${prefixCls}-empty-row`}>
@@ -178,18 +231,31 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
       </ExpandedRow>
     );
     return (
-      <TableRow
-        key={record.key}
-        hidden={!expanded}
-        lock={lock}
-        indentSize={indentSize}
-        prefixCls={prefixCls}
-        columns={columns}
-        record={record}
+      <Draggable
+        draggableId={record.key}
         index={index}
+        key={record.key}
       >
-        {children}
-      </TableRow>
+        {(
+          provided: DraggableProvided,
+          snapshot: DraggableStateSnapshot,
+        ) => (
+            <TableRow
+              provided={provided}
+              snapshot={snapshot}
+              key={record.key}
+              hidden={!expanded}
+              lock={lock}
+              indentSize={indentSize}
+              prefixCls={prefixCls}
+              columns={columns}
+              record={record}
+              index={index}
+            >
+              {children}
+            </TableRow>
+          )}
+      </Draggable>
     );
   }
 

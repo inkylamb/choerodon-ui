@@ -3,6 +3,7 @@ order: 2
 title:
   zh-CN: 显示原始值
   en-US: Pristine
+only: true
 ---
 
 ## zh-CN

@@ -3,6 +3,10 @@ import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
 import { action, computed, get, remove, set } from 'mobx';
 import classNames from 'classnames';
+import {
+   DraggableProvided,
+   DraggableStateSnapshot,
+} from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
 import { ColumnProps } from './Column';
@@ -23,6 +27,8 @@ export interface TableRowProps extends ElementProps {
   record: Record;
   indentSize: number;
   index: number;
+  snapshot: DraggableStateSnapshot,
+  provided: DraggableProvided;
 }
 
 @observer
@@ -171,7 +177,7 @@ export default class TableRow extends Component<TableRowProps, any> {
   }
 
   @autobind
-  getCell(column: ColumnProps, index: number): ReactNode {
+  getCell(column: ColumnProps, index: number,isDragging: boolean): ReactNode {
     const { prefixCls, record, indentSize, lock } = this.props;
     const {
       tableStore: { leafColumns, rightLeafColumns },
@@ -185,6 +191,7 @@ export default class TableRow extends Component<TableRowProps, any> {
         column={column}
         record={record}
         indentSize={indentSize}
+        isDragging={isDragging}
       >
         {this.hasExpandIcon(columnIndex) && this.renderExpandIcon()}
       </TableCell>
@@ -367,7 +374,7 @@ export default class TableRow extends Component<TableRowProps, any> {
   }
 
   render() {
-    const { prefixCls, columns, record, lock, hidden, index } = this.props;
+    const { prefixCls, columns, record, lock, hidden, index, provided,snapshot  } = this.props;
     const {
       tableStore: {
         rowHeight,
@@ -412,7 +419,10 @@ export default class TableRow extends Component<TableRowProps, any> {
       style: CSSProperties;
       'data-index': number;
     } = {
-      ref: this.saveRef,
+      ref:(ref)=>{
+        this.saveRef(ref)
+        provided.innerRef(ref)
+      } ,
       className: classString,
       style: { ...rowExternalProps.style },
       onClick: this.handleClick,
@@ -440,9 +450,18 @@ export default class TableRow extends Component<TableRowProps, any> {
     } else if (selectionMode === SelectionMode.mousedown) {
       rowProps.onMouseDown = this.handleSelectionByMouseDown;
     }
+
+   const getCellWithDrag = (columnItem:ColumnProps,indexItem:number) => {
+     return  this.getCell(columnItem,indexItem,snapshot.isDragging)
+    }
     return [
-      <tr key={key} {...rowExternalProps} {...rowProps}>
-        {columns.map(this.getCell)}
+      <tr 
+        key={key} 
+        {...rowExternalProps} 
+        {...rowProps}
+        {...provided.draggableProps}
+        {...provided.dragHandleProps}>
+        {columns.map(getCellWithDrag)}
       </tr>,
       ...this.renderExpandRow(),
     ];

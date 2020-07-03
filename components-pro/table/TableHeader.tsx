@@ -3,6 +3,14 @@ import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
 import classNames from 'classnames';
 import { computed, get } from 'mobx';
+import {
+  Droppable,
+  Draggable,
+  DraggableProvided,
+  DraggableStateSnapshot,
+  DroppableProvided,
+  DraggableRubric,
+} from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import { ColumnProps } from './Column';
 import { ElementProps } from '../core/ViewComponent';
@@ -13,6 +21,7 @@ import DataSet from '../data-set/DataSet';
 import { getColumnKey } from './utils';
 import ColumnGroup from './ColumnGroup';
 import autobind from '../_util/autobind';
+import {instance} from './Table';
 
 export interface TableHeaderProps extends ElementProps {
   dataSet: DataSet;
@@ -55,7 +64,7 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
     const trs = rows.map((row, rowIndex) => {
       if (row.length) {
         let prevColumn: ColumnProps | undefined;
-        const tds = row.map(({ hidden, column, rowSpan, colSpan, lastLeaf }) => {
+        const tds = row.map(({ hidden, column, rowSpan, colSpan, lastLeaf },index) => {
           if (!hidden) {
             const props: TableHeaderCellProps = {
               key: getColumnKey(column),
@@ -73,7 +82,25 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
               props.colSpan = colSpan;
             }
             prevColumn = lastLeaf;
-            return <TableHeaderCell {...props} />;
+
+            return (
+            <Draggable
+              draggableId={getColumnKey(column)}
+              index={index}
+              key={getColumnKey(column)}
+            >
+              {(
+                provided: DraggableProvided,
+                snapshot: DraggableStateSnapshot,
+              ) => (
+                <TableHeaderCell 
+                  provided={provided}
+                  snapshot={snapshot}
+                  {...props} />
+                )}
+            </Draggable>
+            )
+            ;
           }
           return undefined;
         });
@@ -85,14 +112,60 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
           );
         }
         return (
+        <Droppable
+        droppableId="tableHeader"
+        key="tableHeader"
+        direction="horizontal"
+        renderClone={(
+          provided: DraggableProvided,
+          snapshot: DraggableStateSnapshot,
+          rubric: DraggableRubric,
+        ) => {
+          const rowProps = row[rubric.source.index]
+          const {  column, rowSpan, colSpan, lastLeaf } = rowProps;
+          const props: TableHeaderCellProps = {
+            key: getColumnKey(column),
+            prefixCls,
+            dataSet,
+            prevColumn,
+            column,
+            resizeColumn: lastLeaf,
+            getHeaderNode: this.getHeaderNode,
+          };
+          if (rowSpan > 1) {
+            props.rowSpan = rowSpan;
+          }
+          if (colSpan > 1) {
+            props.colSpan = colSpan;
+          }
+          return (
+            <TableHeaderCell
+              provided={provided}
+              snapshot={snapshot}
+             {...props} />
+          );
+        }}
+        getContainerForClone={() => instance.headtr}
+      >
+        {(droppableProvided: DroppableProvided) => (
           <tr
             key={String(rowIndex)}
             style={{
               height: lock ? this.getHeaderRowStyle(rows, rowIndex, columnResizable) : undefined,
             }}
+            ref={(ref:HTMLElement) => {
+              if(ref){
+                this.saveRef(ref)
+                droppableProvided.innerRef(ref);
+              }
+            }}
+            {...droppableProvided.droppableProps}
           >
             {tds}
+            {droppableProvided.placeholder}
           </tr>
+           )}
+          </Droppable>
         );
       }
       return undefined;
