@@ -180,7 +180,7 @@ export default class TableRow extends Component<TableRowProps, any> {
 
   @autobind
   getCell(column: ColumnProps, index: number,isDragging: boolean): ReactNode {
-    const { prefixCls, record, indentSize, lock, dragColumnAlign } = this.props;
+    const { prefixCls, record, indentSize, lock } = this.props;
     const {
       tableStore: { leafColumns, rightLeafColumns },
     } = this.context;

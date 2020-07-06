@@ -101,9 +101,8 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
     const { prefixCls, lock ,indentSize,dragColumnAlign} = this.props;
     const { leafColumns,leafColumnsBody } = this;
     const {
-      tableStore: { data, props: { virtual },dataSet, height },
+      tableStore: { data, props: { virtual,dragColumnAlign:propsDragColumnAlign},dataSet, height,dragRow },
     } = this.context;
-    console.log(dragColumnAlign)
     const rowData = virtual && height ? this.processData() : data;
     const rows = data.length
       ? this.getRows(rowData, leafColumns, true, lock)
@@ -112,6 +111,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
       <Droppable
         droppableId="table"
         key="table"
+        isDropDisabled = {(dragColumnAlign || propsDragColumnAlign) ? !(dragColumnAlign && propsDragColumnAlign)  :!dragRow }
         renderClone={(
           provided: DraggableProvided,
           snapshot: DraggableStateSnapshot,
@@ -138,7 +138,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
       >
       {(droppableProvided: DroppableProvided) => (
         <tbody
-          ref={(ref:HTMLElement) => {
+          ref={(ref: HTMLTableSectionElement | null) => {
           if(ref){
             this.saveRef(ref)
             droppableProvided.innerRef(ref);
@@ -227,7 +227,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
   ): ReactNode {
     const { prefixCls, indentSize,dragColumnAlign } = this.props;
     const {
-      tableStore: { isTree },
+      tableStore: { isTree,props:{dragColumnAlign:propsDragColumnAlign},dragRow },
     } = this.context;
     const children = isTree && (
       <ExpandedRow record={record} columns={columns} lock={lock}>
@@ -236,8 +236,9 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
     );
     return (
       <Draggable
-        draggableId={record.key}
+        draggableId={record.key.toString()}
         index={index}
+        isDragDisabled = {(dragColumnAlign || propsDragColumnAlign) ?!(dragColumnAlign && propsDragColumnAlign)  :!dragRow }
         key={record.key}
       >
         {(

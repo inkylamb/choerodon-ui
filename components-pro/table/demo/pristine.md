@@ -3,7 +3,6 @@ order: 2
 title:
   zh-CN: 显示原始值
   en-US: Pristine
-only: true
 ---
 
 ## zh-CN
@@ -118,7 +117,7 @@ class App extends React.Component {
   render() {
     const buttons = [this.createButton, 'save', 'delete', 'reset'];
     return (
-      <Table dragColumnAlign="left" dragColumn={true}  key="user" buttons={buttons} dataSet={this.userDs} pristine>
+      <Table dragColumnAlign="left" dragRow={true} dragColumn={true}  key="user" buttons={buttons} dataSet={this.userDs} pristine>
         <Column name="userid" />
         <Column name="age" />
         <Column name="enable" />

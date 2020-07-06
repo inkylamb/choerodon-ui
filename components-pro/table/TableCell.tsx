@@ -537,8 +537,8 @@ export default class TableCell extends Component<TableCellProps> {
       className,
       cellExternalProps.className,
     );
-    const widthDraggingStyle = ():{width?: number,minWidth?:number} =>{
-      const draggingStyle = {}
+    const widthDraggingStyle = ():React.CSSProperties =>{
+      const draggingStyle:React.CSSProperties = {}
       if(column.width){
         draggingStyle.width = pxToRem(column.width)
       }

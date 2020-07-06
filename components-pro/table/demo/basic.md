@@ -399,8 +399,10 @@ class App extends React.Component {
     return (
       <Table
         key="user"
+        dragRow={true}
         buttons={buttons}
         dataSet={this.userDs}
+        dragColumn={true}
         autoMaxWidth={true}
         header="User"
         onRow={({ dataSet, record, index, expandedRow }) => {

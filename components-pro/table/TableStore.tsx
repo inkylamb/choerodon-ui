@@ -19,6 +19,7 @@ import {
   TableEditMode,
   TableMode,
   TableQueryBarType,
+  DragColumnAlign,
 } from './enum';
 import { stopPropagation } from '../_util/EventManager';
 import { getColumnKey, getHeader } from './utils';
@@ -28,7 +29,7 @@ import autobind from '../_util/autobind';
 import ColumnGroup from './ColumnGroup';
 import { expandIconProps, TablePaginationConfig } from './Table';
 
-const SELECTION_KEY = '__selection-column__';
+export const SELECTION_KEY = '__selection-column__';
 
 export const DRAG_KEY = '__drag-column__';
 
@@ -263,6 +264,14 @@ export default class TableStore {
       return false;
     }
     return true;
+  }
+
+  @computed
+  get dragRow(): boolean {
+    if(this.isTree){
+      return false;
+    }
+    return this.props.dragRow
   }
 
   @computed
@@ -765,9 +774,17 @@ export default class TableStore {
         renderer:() => renderDrageBox(),
         align: ColumnAlign.center,
         width:50,
-        lock:true,
+      } 
+      if(dragColumnAlign === DragColumnAlign.left) {
+        dragColumn.lock = ColumnLock.left
+        columns.unshift(dragColumn);
       }
-      columns.unshift(dragColumn);
+
+      if(dragColumnAlign === DragColumnAlign.right) {
+        dragColumn.lock = ColumnLock.right
+        columns.push(dragColumn)
+      }
+      
     }
     return columns;
   }

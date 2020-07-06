@@ -8,7 +8,7 @@ import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import TableContext from './TableContext';
 import { ElementProps } from '../core/ViewComponent';
-import { ColumnProps, minColumnWidth, columnWidth } from './Column';
+import { ColumnProps, minColumnWidth } from './Column';
 import { ColumnLock,DragColumnAlign } from './enum';
 import TableEditor from './TableEditor';
 import TableCol from './TableCol';
@@ -166,8 +166,17 @@ export default class TableWrapper extends Component<TableWrapperProps, any> {
   get tableWidth() {
     const { lock, hasBody,dragColumnAlign } = this.props;
     const {
-      tableStore: { overflowY, overflowX,props: { virtual } },
+      tableStore: { overflowY, overflowX,props: { virtual },columns },
     } = this.context;
+
+    if(dragColumnAlign && columns && columns.length > 0){
+     const dragColumns = columns.filter((columnItem) => {
+        return columnItem.key === DRAG_KEY
+      })
+      if(dragColumns.length > 0){
+        return dragColumns[0].width 
+      }
+    }
     if (overflowX) {
       let tableWidth = this.leafColumnsWidth;
       if (tableWidth !== undefined && overflowY && lock !== ColumnLock.left && !hasBody ) {
@@ -176,10 +185,6 @@ export default class TableWrapper extends Component<TableWrapperProps, any> {
         }
       }
       return pxToRem(tableWidth);
-    }
-
-    if(dragColumnAlign){
-      return '0.5rem'
     }
     return '100%';
   }

@@ -23,6 +23,7 @@ import { ColumnAlign } from './enum';
 import { ShowHelp } from '../field/enum';
 import Tooltip from '../tooltip';
 import autobind from '../_util/autobind';
+import {SELECTION_KEY} from './TableStore'
 
 export interface TableHeaderCellProps extends ElementProps {
   dataSet: DataSet;
@@ -221,9 +222,9 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
   }
 
   render() {
-    const { column, prefixCls, dataSet, rowSpan, colSpan,snapshot, provided  } = this.props;
+    const { column, prefixCls, dataSet, rowSpan, colSpan, provided  } = this.props;
     const {
-      tableStore: { rowHeight, columnResizable },
+      tableStore: { rowHeight, columnResizable,props:{dragColumn} },
     } = this.context;
     const sortPrefixCls = `${prefixCls}-sort`;
     const {
@@ -266,6 +267,13 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
         height: pxToRem(rowHeight),
       };
     }
+    const dragIcon = (
+        <Icon key="DragId" type="swap_horiz" className={`${prefixCls}-header-drag-icon`} />
+    );
+    if(column.key !== SELECTION_KEY && dragColumn){
+      innerProps.children.push(dragIcon)
+    }
+    
     if (showHelp !== ShowHelp.none) {
       const fieldHelp = defaultTo(field && field.get('help'), help);
       if (fieldHelp) {
@@ -279,6 +287,7 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
         } else {
           innerProps.children.push(helpIcon);
         }
+
       }
     }
     if (sortable && name) {
