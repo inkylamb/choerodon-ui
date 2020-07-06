@@ -386,7 +386,7 @@ export default class TableRow extends Component<TableRowProps, any> {
         selectedHighLightRow,
         mouseBatchChooseIdList,
         mouseBatchChooseState,
-        props: { onRow, rowRenderer, selectionMode },
+        props: { onRow, rowRenderer, selectionMode,dragRow },
       },
     } = this.context;
     const { dataSet, isCurrent, key, id } = record;
@@ -437,6 +437,10 @@ export default class TableRow extends Component<TableRowProps, any> {
       rowProps.onMouseEnter = this.handleMouseEnter;
       rowProps.onMouseLeave = this.handleMouseLeave;
     }
+    if(dragRow && provided && provided.draggableProps){
+      rowProps.style = {...provided.draggableProps.style,...rowExternalProps.style}
+    }
+
     if (hidden) {
       rowProps.style.display = 'none';
     }
@@ -464,14 +468,15 @@ export default class TableRow extends Component<TableRowProps, any> {
       }
       return true
     }
-
     return [
       <tr 
         key={key} 
         {...rowExternalProps} 
         {...rowProps}
         {...provided.draggableProps}
-        {...provided.dragHandleProps}>
+        {...provided.dragHandleProps}
+        style = {rowProps.style}
+        >
         {columns.filter(filterDrag).map(getCellWithDrag)}
       </tr>,
       ...this.renderExpandRow(),

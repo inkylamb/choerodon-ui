@@ -11,7 +11,7 @@ import isObject from 'lodash/isObject';
 import noop from 'lodash/noop';
 import classes from 'component-classes';
 import { action } from 'mobx';
-import { DragDropContext } from 'react-beautiful-dnd';
+import { DragDropContext,DropResult,ResponderProvided } from 'react-beautiful-dnd';
 import { getConfig, getProPrefixCls } from 'choerodon-ui/lib/configure';
 import warning from 'choerodon-ui/lib/_util/warning';
 import { pxToRem, toPx } from 'choerodon-ui/lib/_util/UnitConvertor';
@@ -351,6 +351,10 @@ export interface TableProps extends DataSetComponentProps {
    * 开启行拖拽
    */
   dragRow?: boolean;
+  /**
+   * 拖拽触发事件
+   */
+  onDragEnd?:(resultDrag: DropResult, _provided: ResponderProvided,dataSet:DataSet,columns:ColumnProps[]) => void
 }
 
 @observer
@@ -738,6 +742,7 @@ export default class Table extends DataSetComponent<TableProps> {
       'dragColumnAlign',
       'dragColumn',
       'dragRow',
+      'onDragEnd',
     ]);
     otherProps.onKeyDown = this.handleKeyDown;
     const { rowHeight } = this.tableStore;
@@ -964,7 +969,8 @@ export default class Table extends DataSetComponent<TableProps> {
   };
 
   @autobind
-  onDragEnd(resultDrag) {
+  onDragEnd(resultDrag: DropResult, _provided: ResponderProvided) {
+    const {onDragEnd}  = this.props
     if(resultDrag && resultDrag.destination){
       if (resultDrag.destination.droppableId === 'table') {
         this.reorderDataSet(
@@ -980,6 +986,9 @@ export default class Table extends DataSetComponent<TableProps> {
           resultDrag.destination.index,
         );
       }
+    }
+    if(onDragEnd){
+      onDragEnd(resultDrag,_provided,this.tableStore.dataSet,this.tableStore.columns)
     }
   }
 
