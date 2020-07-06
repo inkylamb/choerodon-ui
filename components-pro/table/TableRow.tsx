@@ -15,9 +15,9 @@ import Record from '../data-set/Record';
 import { ElementProps } from '../core/ViewComponent';
 import TableContext from './TableContext';
 import ExpandIcon from './ExpandIcon';
-import { ColumnLock, SelectionMode } from './enum';
+import { ColumnLock, SelectionMode,DragColumnAlign } from './enum';
 import { getColumnKey, isDisabledRow, isSelectedRow } from './utils';
-import { EXPAND_KEY } from './TableStore';
+import { EXPAND_KEY,DRAG_KEY } from './TableStore';
 import { ExpandedRowProps } from './ExpandedRow';
 import autobind from '../_util/autobind';
 
@@ -27,8 +27,9 @@ export interface TableRowProps extends ElementProps {
   record: Record;
   indentSize: number;
   index: number;
-  snapshot: DraggableStateSnapshot,
+  snapshot: DraggableStateSnapshot;
   provided: DraggableProvided;
+  dragColumnAlign?: DragColumnAlign;
 }
 
 @observer
@@ -44,6 +45,7 @@ export default class TableRow extends Component<TableRowProps, any> {
     columns: PropTypes.array.isRequired,
     record: PropTypes.instanceOf(Record).isRequired,
     indentSize: PropTypes.number.isRequired,
+    dragColumnAlign: PropTypes.oneOf([ColumnLock.right, ColumnLock.left]),
   };
 
   static contextType = TableContext;
@@ -178,7 +180,7 @@ export default class TableRow extends Component<TableRowProps, any> {
 
   @autobind
   getCell(column: ColumnProps, index: number,isDragging: boolean): ReactNode {
-    const { prefixCls, record, indentSize, lock } = this.props;
+    const { prefixCls, record, indentSize, lock, dragColumnAlign } = this.props;
     const {
       tableStore: { leafColumns, rightLeafColumns },
     } = this.context;
@@ -454,6 +456,15 @@ export default class TableRow extends Component<TableRowProps, any> {
    const getCellWithDrag = (columnItem:ColumnProps,indexItem:number) => {
      return  this.getCell(columnItem,indexItem,snapshot.isDragging)
     }
+
+    const filterDrag = (columnItem:ColumnProps) => {
+      const {dragColumnAlign} = this.props
+      if(dragColumnAlign){
+        return columnItem.key === DRAG_KEY
+      }
+      return true
+    }
+
     return [
       <tr 
         key={key} 
@@ -461,7 +472,7 @@ export default class TableRow extends Component<TableRowProps, any> {
         {...rowProps}
         {...provided.draggableProps}
         {...provided.dragHandleProps}>
-        {columns.map(getCellWithDrag)}
+        {columns.filter(filterDrag).map(getCellWithDrag)}
       </tr>,
       ...this.renderExpandRow(),
     ];

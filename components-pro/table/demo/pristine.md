@@ -118,7 +118,7 @@ class App extends React.Component {
   render() {
     const buttons = [this.createButton, 'save', 'delete', 'reset'];
     return (
-      <Table key="user" buttons={buttons} dataSet={this.userDs} pristine>
+      <Table dragColumnAlign="left" dragColumn={true}  key="user" buttons={buttons} dataSet={this.userDs} pristine>
         <Column name="userid" />
         <Column name="age" />
         <Column name="enable" />

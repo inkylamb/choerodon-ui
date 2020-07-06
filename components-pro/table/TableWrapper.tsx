@@ -8,18 +8,20 @@ import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import TableContext from './TableContext';
 import { ElementProps } from '../core/ViewComponent';
-import { ColumnProps, minColumnWidth } from './Column';
-import { ColumnLock } from './enum';
+import { ColumnProps, minColumnWidth, columnWidth } from './Column';
+import { ColumnLock,DragColumnAlign } from './enum';
 import TableEditor from './TableEditor';
 import TableCol from './TableCol';
 import { getColumnKey } from './utils';
 import autobind from '../_util/autobind';
+import { DRAG_KEY } from './TableStore';
 
 export interface TableWrapperProps extends ElementProps {
   lock?: ColumnLock | boolean;
   hasBody?: boolean;
   hasHeader?: boolean;
   hasFooter?: boolean;
+  dragColumnAlign?:DragColumnAlign,
 }
 
 @observer
@@ -122,7 +124,16 @@ export default class TableWrapper extends Component<TableWrapperProps, any> {
       tableStore: { overflowY, overflowX },
     } = this.context;
     let hasEmptyWidth = false;
-    const cols = this.leafColumns.map((column, index, array) => {
+
+    const filterDrag = (columnItem:ColumnProps) => {
+      const {dragColumnAlign} = this.props
+      if(dragColumnAlign){
+        return columnItem.key === DRAG_KEY
+      }
+      return true
+    }
+
+    const cols = this.leafColumns.filter(filterDrag).map((column, index, array) => {
       let width = get(column, 'width');
       if (!overflowX) {
         if (!hasEmptyWidth && index === array.length - 1) {
@@ -153,7 +164,7 @@ export default class TableWrapper extends Component<TableWrapperProps, any> {
 
   @computed
   get tableWidth() {
-    const { lock, hasBody } = this.props;
+    const { lock, hasBody,dragColumnAlign } = this.props;
     const {
       tableStore: { overflowY, overflowX,props: { virtual } },
     } = this.context;
@@ -165,6 +176,10 @@ export default class TableWrapper extends Component<TableWrapperProps, any> {
         }
       }
       return pxToRem(tableWidth);
+    }
+
+    if(dragColumnAlign){
+      return '0.5rem'
     }
     return '100%';
   }

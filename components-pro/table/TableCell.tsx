@@ -548,8 +548,6 @@ export default class TableCell extends Component<TableCellProps> {
       draggingStyle.whiteSpace = "nowrap"
       return draggingStyle
     }
-
-    console.log(widthDraggingStyle())
     const td = (
       <td
         {...cellExternalProps}

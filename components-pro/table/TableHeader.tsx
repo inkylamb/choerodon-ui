@@ -16,16 +16,18 @@ import { ColumnProps } from './Column';
 import { ElementProps } from '../core/ViewComponent';
 import TableHeaderCell, { TableHeaderCellProps } from './TableHeaderCell';
 import TableContext from './TableContext';
-import { ColumnLock } from './enum';
+import { ColumnLock ,DragColumnAlign} from './enum';
 import DataSet from '../data-set/DataSet';
 import { getColumnKey } from './utils';
 import ColumnGroup from './ColumnGroup';
 import autobind from '../_util/autobind';
 import {instance} from './Table';
+import { DRAG_KEY } from './TableStore';
 
 export interface TableHeaderProps extends ElementProps {
   dataSet: DataSet;
   lock?: ColumnLock | boolean;
+  dragColumnAlign?:DragColumnAlign;
 }
 
 @observer
@@ -38,6 +40,7 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
       PropTypes.bool,
       PropTypes.oneOf([ColumnLock.right, ColumnLock.left]),
     ]),
+    dragColumnAlign:PropTypes.oneOf([DragColumnAlign.right, DragColumnAlign.left]),
   };
 
   static contextType = TableContext;
@@ -61,6 +64,7 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
       tableStore: { overflowY, columnResizable },
     } = this.context;
     const rows = this.getTableHeaderRows(groupedColumns);
+
     const trs = rows.map((row, rowIndex) => {
       if (row.length) {
         let prevColumn: ColumnProps | undefined;

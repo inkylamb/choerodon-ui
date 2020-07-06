@@ -19,15 +19,16 @@ import { ElementProps } from '../core/ViewComponent';
 import TableContext from './TableContext';
 import TableRow from './TableRow';
 import Record from '../data-set/Record';
-import { ColumnLock } from './enum';
+import { ColumnLock ,DragColumnAlign} from './enum';
 import ExpandedRow from './ExpandedRow';
 import { DataSetStatus } from '../data-set/enum';
 import autobind from '../_util/autobind';
-import { instance } from './Table'
+import { instance } from './Table';
 
 export interface TableTBodyProps extends ElementProps {
   lock?: ColumnLock | boolean;
   indentSize: number;
+  dragColumnAlign?:DragColumnAlign;
 }
 
 @observer
@@ -39,6 +40,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
       PropTypes.bool,
       PropTypes.oneOf([ColumnLock.right, ColumnLock.left]),
     ]),
+    dragColumnAlign: PropTypes.oneOf([ColumnLock.right, ColumnLock.left]),
     prefixCls: PropTypes.string,
     indentSize: PropTypes.number.isRequired,
   };
@@ -96,11 +98,12 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
   }
 
   render() {
-    const { prefixCls, lock ,indentSize} = this.props;
+    const { prefixCls, lock ,indentSize,dragColumnAlign} = this.props;
     const { leafColumns,leafColumnsBody } = this;
     const {
       tableStore: { data, props: { virtual },dataSet, height },
     } = this.context;
+    console.log(dragColumnAlign)
     const rowData = virtual && height ? this.processData() : data;
     const rows = data.length
       ? this.getRows(rowData, leafColumns, true, lock)
@@ -127,6 +130,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
               columns={leafColumnsBody}
               record={record}
               index={record.id}
+              dragColumnAlign = {dragColumnAlign}
             />
           );
         }}
@@ -221,7 +225,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
     expanded?: boolean,
     lock?: ColumnLock | boolean,
   ): ReactNode {
-    const { prefixCls, indentSize } = this.props;
+    const { prefixCls, indentSize,dragColumnAlign } = this.props;
     const {
       tableStore: { isTree },
     } = this.context;
@@ -251,6 +255,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
               columns={columns}
               record={record}
               index={index}
+              dragColumnAlign={dragColumnAlign}
             >
               {children}
             </TableRow>

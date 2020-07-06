@@ -5,6 +5,7 @@ import isPlainObject from 'lodash/isPlainObject';
 import defer from 'lodash/defer';
 import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
 import { getConfig, getProPrefixCls } from 'choerodon-ui/lib/configure';
+import Icon from 'choerodon-ui/lib/icon'
 import Column, { ColumnProps, columnWidth } from './Column';
 import DataSet from '../data-set/DataSet';
 import Record from '../data-set/Record';
@@ -28,6 +29,9 @@ import ColumnGroup from './ColumnGroup';
 import { expandIconProps, TablePaginationConfig } from './Table';
 
 const SELECTION_KEY = '__selection-column__';
+
+export const DRAG_KEY = '__drag-column__';
+
 export const EXPAND_KEY = '__expand-column__';
 
 export type HeaderText = { name: string; label: string; };
@@ -107,6 +111,10 @@ function renderSelectionBox({ record, store }: { record: any, store: TableStore;
       );
     }
   }
+}
+
+function renderDrageBox() {
+  return (<Icon type="swap_vert" />)
 }
 
 function mergeDefaultProps(columns: ColumnProps[], defaultKey: number[] = [0]): ColumnProps[] {
@@ -401,7 +409,7 @@ export default class TableStore {
     const { columns, children } = this.props;
     return observable.array(
       this.addExpandColumn(
-        this.addSelectionColumn(columns ? mergeDefaultProps(columns) : normalizeColumns(children)),
+        this.addDragColumn(this.addSelectionColumn(columns ? mergeDefaultProps(columns) : normalizeColumns(children))),
       ),
     );
   }
@@ -746,4 +754,22 @@ export default class TableStore {
     }
     return columns;
   }
+
+  private addDragColumn(columns: ColumnProps[]): ColumnProps[] {
+    const { suffixCls, prefixCls,dragColumnAlign } = this.props;
+    if(dragColumnAlign){
+      const dragColumn : ColumnProps = {
+        key: DRAG_KEY,
+        resizable:false,
+        className: `${getProPrefixCls(suffixCls!, prefixCls)}-drag-column`,
+        renderer:() => renderDrageBox(),
+        align: ColumnAlign.center,
+        width:50,
+        lock:true,
+      }
+      columns.unshift(dragColumn);
+    }
+    return columns;
+  }
+
 }
