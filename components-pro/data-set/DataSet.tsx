@@ -45,6 +45,7 @@ import {
   useSelected,
   sliceTree,
   findRootParent,
+  arrayMove,
 } from './utils';
 import EventManager from '../_util/EventManager';
 import DataSetSnapshot from './DataSetSnapshot';
@@ -1305,6 +1306,13 @@ export default class DataSet extends EventManager {
   @action
   reverse(): Record[] {
     return (this.records = this.records.reverse());
+  }
+
+  /**
+   * 切换记录的顺序
+   */
+  move(from:number, to:number){
+    arrayMove(this.records,from,to)
   }
 
   /**

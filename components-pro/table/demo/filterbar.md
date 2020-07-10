@@ -112,6 +112,7 @@ class App extends React.Component {
   render() {
     return (
       <Table
+        dragColumn={true}
         highLightRow={false}
         dataSet={this.state.ds}
         queryBar="bar"

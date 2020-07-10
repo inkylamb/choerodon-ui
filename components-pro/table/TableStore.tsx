@@ -6,6 +6,7 @@ import defer from 'lodash/defer';
 import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
 import { getConfig, getProPrefixCls } from 'choerodon-ui/lib/configure';
 import Icon from 'choerodon-ui/lib/icon'
+import { isFunction } from 'lodash';
 import Column, { ColumnProps, columnWidth } from './Column';
 import DataSet from '../data-set/DataSet';
 import Record from '../data-set/Record';
@@ -112,10 +113,6 @@ function renderSelectionBox({ record, store }: { record: any, store: TableStore;
       );
     }
   }
-}
-
-function renderDrageBox() {
-  return (<Icon type="swap_vert" />)
 }
 
 function mergeDefaultProps(columns: ColumnProps[], defaultKey: number[] = [0]): ColumnProps[] {
@@ -230,6 +227,8 @@ export default class TableStore {
   mouseBatchChooseState: boolean = false;
 
   @observable mouseBatchChooseIdList?: number[];
+
+  @observable columnDeep: number ;
 
   @computed
   get dataSet(): DataSet {
@@ -596,6 +595,18 @@ export default class TableStore {
     return this.props.editMode === TableEditMode.inline;
   }
 
+  @computed 
+  get columnMaxDeep() {
+    return this.columnDeep
+  }
+
+  set columnMaxDeep(deep:number) {
+    runInAction(() => {
+      this.columnDeep = Math.max(this.columnDeep,deep);
+    })
+    
+  }
+
   private handleSelectAllChange = action(value => {
     const { dataSet, filter } = this.props;
     if (value) {
@@ -616,6 +627,7 @@ export default class TableStore {
       this.lockColumnsFootRowsHeight = {};
       this.node = node;
       this.expandedRows = [];
+      this.columnDeep = 0;
     });
     this.setProps(node.props);
   }
@@ -764,6 +776,14 @@ export default class TableStore {
     return columns;
   }
 
+  renderDrageBox({record}) {
+    const {rowDragRender} = this.props
+      if( rowDragRender && isFunction(rowDragRender.renderIcon)){
+        return  rowDragRender.renderIcon({record})
+      }
+      return (<Icon type="swap_vert" />)
+  }
+
   private addDragColumn(columns: ColumnProps[]): ColumnProps[] {
     const { suffixCls, prefixCls,dragColumnAlign } = this.props;
     if(dragColumnAlign){
@@ -771,7 +791,7 @@ export default class TableStore {
         key: DRAG_KEY,
         resizable:false,
         className: `${getProPrefixCls(suffixCls!, prefixCls)}-drag-column`,
-        renderer:() => renderDrageBox(),
+        renderer:({ record }) => this.renderDrageBox({record}),
         align: ColumnAlign.center,
         width:50,
       } 

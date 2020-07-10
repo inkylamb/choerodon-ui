@@ -38,6 +38,9 @@ class App extends React.Component {
       unSelect: ({ record, dataSet }) => console.log('unSelect', record, dataSet),
     },
   });
+  hello = () => {
+          console.log(111)
+      }
 
   render() {
     return (
@@ -45,6 +48,7 @@ class App extends React.Component {
         dataSet={this.ds}
         checkable
         renderer={nodeRenderer}
+        onSelect={this.hello}
       />
     );
   }

@@ -46,7 +46,6 @@ class App extends React.Component {
         required: true,
       },
       { name: 'code_code', type: 'string', bind: 'code.code' },
-      { name: 'code_description', type: 'string', bind: 'code.description' },
     ],
     events: {
       update: handleDataSetChange,
@@ -58,9 +57,6 @@ class App extends React.Component {
       <Row gutter={10}>
         <Col span={12}>
           <Lov dataSet={this.ds} name="code" noCache triggerMode='input' tableProps={{ selectionMode: 'rowbox' }} />
-        </Col>
-        <Col span={12}>
-          <Lov dataSet={this.ds} name="code_string" />
         </Col>
       </Row>
     );

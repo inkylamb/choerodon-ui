@@ -12,6 +12,7 @@ import {
   DraggableRubric,
 } from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
+import { isFunction } from 'lodash';
 import { ColumnProps } from './Column';
 import { ElementProps } from '../core/ViewComponent';
 import TableHeaderCell, { TableHeaderCellProps } from './TableHeaderCell';
@@ -47,6 +48,8 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
 
   node: HTMLTableSectionElement | null;
 
+  columnDeep :number = 0
+
   @autobind
   saveRef(node) {
     this.node = node;
@@ -61,8 +64,10 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
     const { prefixCls, lock, dataSet,dragColumnAlign } = this.props;
     const { groupedColumns } = this;
     const {
-      tableStore: { overflowY, columnResizable,props:{dragColumn}},
+      tableStore: { overflowY,columnMaxDeep, columnResizable,props:{dragColumn,columnsDragRender={}}},
     } = this.context;
+    const {droppableProps,draggableProps,renderClone} = columnsDragRender
+    const {tableStore} = this.context;
     const rows = this.getTableHeaderRows(groupedColumns);
     const filterDrag = (columnItem:ColumnGroup):boolean => {
       if(columnItem && columnItem.column && dragColumnAlign){
@@ -70,7 +75,7 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
       }
       return true
     }
-
+    tableStore.columnMaxDeep = (rows.length || 0)
     const trs = rows.map((row, rowIndex) => {
       if (row.length) {
         let prevColumn: ColumnProps | undefined;
@@ -81,7 +86,8 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
               draggableId={getColumnKey(column).toString()}
               index={index}
               key={getColumnKey(column)}
-              isDragDisabled = {getColumnKey(column) === DRAG_KEY || !dragColumn }
+              isDragDisabled = {getColumnKey(column) === DRAG_KEY || (!dragColumn || columnMaxDeep >1) }
+              {...draggableProps}
             >
               {(
                 provided: DraggableProvided,
@@ -127,7 +133,7 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
         droppableId="tableHeader"
         key={ row.length > 1 ? `tableHeader${rowIndex}`:"tableHeader" }
         direction="horizontal"
-        isDropDisabled = {!dragColumn}
+        isDropDisabled = {(!dragColumn || columnMaxDeep >1)}
         renderClone={(
           provided: DraggableProvided,
           snapshot: DraggableStateSnapshot,
@@ -152,12 +158,16 @@ export default class TableHeader extends Component<TableHeaderProps, any> {
           if (colSpan > 1) {
             props.colSpan = colSpan;
           }
+          if(renderClone && isFunction(renderClone)){
+            return renderClone(props)
+          }
           return (
             <TableHeaderCell
              {...props} />
           );
         }}
-        getContainerForClone={() => instance.headtr}
+        getContainerForClone={() => instance().headtr}
+        {...droppableProps}
       >
         {(droppableProvided: DroppableProvided) => (
           <tr

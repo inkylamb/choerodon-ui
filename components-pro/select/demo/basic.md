@@ -43,16 +43,6 @@ class App extends React.Component {
             )}
           </Select>
         </Col>
-        <Col span={4}>
-          <Button onClick={this.handleClick}>修改选项</Button>
-        </Col>
-        <Col span={12}>
-          <Select placeholder="请选择" disabled>
-            <Option value="jack">Jack</Option>
-            <Option value="lucy">Lucy</Option>
-            <Option value="wu">Wu</Option>
-          </Select>
-        </Col>
       </Row>
     );
   }

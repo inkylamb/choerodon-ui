@@ -3,6 +3,7 @@ order: 9
 title:
   zh-CN: 复合下拉框
   en-US: ComboBox
+only: true
 ---
 
 ## zh-CN
@@ -46,7 +47,7 @@ class App extends React.Component {
     return (
       <Row gutter={10}>
         <Col span={12}>
-          <Select placeholder="复合" onChange={this.handleChange} combo value={this.state.value}>
+          <Select placeholder="复合" onChange={this.handleChange}  restrict="0-9" combo value={this.state.value}>
             <Option value="jack">Jack</Option>
             <Option value="lucy">Lucy</Option>
             <Option value="wu">Wu</Option>

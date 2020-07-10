@@ -438,7 +438,7 @@ export default class TableRow extends Component<TableRowProps, any> {
       rowProps.onMouseLeave = this.handleMouseLeave;
     }
     if(dragRow && provided && provided.draggableProps){
-      rowProps.style = {...provided.draggableProps.style,...rowExternalProps.style}
+      rowProps.style = {...provided.draggableProps.style,...rowExternalProps.style,cursor: 'move'}
     }
 
     if (hidden) {

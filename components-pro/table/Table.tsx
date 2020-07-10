@@ -11,7 +11,15 @@ import isObject from 'lodash/isObject';
 import noop from 'lodash/noop';
 import classes from 'component-classes';
 import { action } from 'mobx';
-import { DragDropContext,DropResult,ResponderProvided } from 'react-beautiful-dnd';
+import { 
+  DragDropContext,
+  DropResult,
+  ResponderProvided,
+  DroppableProps, 
+  DraggableProps,
+  DraggableRubric,
+  DraggableStateSnapshot,
+} from 'react-beautiful-dnd';
 import { getConfig, getProPrefixCls } from 'choerodon-ui/lib/configure';
 import warning from 'choerodon-ui/lib/_util/warning';
 import { pxToRem, toPx } from 'choerodon-ui/lib/_util/UnitConvertor';
@@ -19,6 +27,8 @@ import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 import ReactResizeObserver from 'choerodon-ui/lib/_util/resizeObserver';
 import Column, { ColumnProps, defaultMinWidth } from './Column';
+import TableRow,{TableRowProps} from './TableRow';
+import TableHeaderCell,{TableHeaderCellProps} from './TableHeaderCell';
 import DataSet from '../data-set/DataSet';
 import Record from '../data-set/Record';
 import TableStore,{DRAG_KEY} from './TableStore';
@@ -126,14 +136,31 @@ export interface Instance {
   headtr:React.ReactElement;
 }
 
+export interface DragTableHeaderCellProps extends TableHeaderCellProps{
+  rubric: DraggableRubric
+}
+export interface DragTableRowProps extends TableRowProps {
+  rubric: DraggableRubric
+}
+export type DragRenderClone = (DragTableRowProps | DragTableHeaderCellProps)
+
+export type DragIconRender = ({column:ColumnProps,dataSet:DataSet,snapshot:DraggableStateSnapshot} | {record: Record})
+
+export interface DragRender {
+  droppableProps: DroppableProps;
+  draggableProps: DraggableProps;
+  renderClone: (dragRenderProps:DragRenderClone) => ReactElement<any>;
+  renderIcon: (DragIconRender) => ReactElement<any>;
+};
+
+let _instance;
 // 构造一个单例table来防止body下不能有table元素的报错
-export const instance:Instance = (function(){
-  let _instance;
+export const instance = () :Instance => {
   // Using a table as the portal so that we do not get react
   // warnings when mounting a tr element
-  const _tableContain = () => {
+  const _tableContain = ():Instance => {
     const table: HTMLElement = document.createElement('table');
-      table.classList.add('my-super-cool-table-portal');
+      table.classList.add(`${getProPrefixCls('table')}-drag-container`);
       const thead: HTMLElement = document.createElement('thead');
       thead.classList.add(`${getProPrefixCls('table')}-thead`)
       table.appendChild(thead);
@@ -147,7 +174,9 @@ export const instance:Instance = (function(){
       }
     document.body.appendChild(table);
     return {
+      // @ts-ignore
       tbody,
+      // @ts-ignore
       headtr,
     }
   }
@@ -155,7 +184,7 @@ export const instance:Instance = (function(){
     return _instance 
   }
   return _instance = _tableContain()
-})();
+};
 
 export interface TableProps extends DataSetComponentProps {
   columns?: ColumnProps[];
@@ -354,7 +383,15 @@ export interface TableProps extends DataSetComponentProps {
   /**
    * 拖拽触发事件
    */
-  onDragEnd?:(resultDrag: DropResult, _provided: ResponderProvided,dataSet:DataSet,columns:ColumnProps[]) => void
+  onDragEnd?:(dataSet:DataSet,columns:ColumnProps[],resultDrag: DropResult, provided: ResponderProvided) => void
+  /**
+   * 渲染列拖拽
+   */
+  columnsDragRender?:DragRender;
+  /**
+   * 渲染行拖拽
+   */
+  rowDragRender?:DragRender;
 }
 
 @observer
@@ -368,6 +405,10 @@ export default class Table extends DataSetComponent<TableProps> {
   static AdvancedQueryBar = AdvancedQueryBar;
 
   static ToolBar = ToolBar;
+
+  static TableRow = TableRow;
+
+  static TableHeaderCell = TableHeaderCell;
 
   static propTypes = {
     columns: PropTypes.array,
@@ -969,7 +1010,7 @@ export default class Table extends DataSetComponent<TableProps> {
   };
 
   @autobind
-  onDragEnd(resultDrag: DropResult, _provided: ResponderProvided) {
+  onDragEnd(resultDrag: DropResult, provided: ResponderProvided) {
     const {onDragEnd}  = this.props
     if(resultDrag && resultDrag.destination){
       if (resultDrag.destination.droppableId === 'table') {
@@ -988,7 +1029,7 @@ export default class Table extends DataSetComponent<TableProps> {
       }
     }
     if(onDragEnd){
-      onDragEnd(resultDrag,_provided,this.tableStore.dataSet,this.tableStore.columns)
+      onDragEnd(this.tableStore.dataSet,this.tableStore.columns,resultDrag,provided)
     }
   }
 

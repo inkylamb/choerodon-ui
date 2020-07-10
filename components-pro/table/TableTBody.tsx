@@ -14,6 +14,7 @@ import {
 } from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import ReactResizeObserver from 'choerodon-ui/lib/_util/resizeObserver';
+import { isFunction } from 'lodash';
 import { ColumnProps } from './Column';
 import { ElementProps } from '../core/ViewComponent';
 import TableContext from './TableContext';
@@ -101,8 +102,9 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
     const { prefixCls, lock ,indentSize,dragColumnAlign} = this.props;
     const { leafColumns,leafColumnsBody } = this;
     const {
-      tableStore: { data, props: { virtual,dragColumnAlign:propsDragColumnAlign},dataSet, height,dragRow },
+      tableStore: { data, props: { virtual,dragColumnAlign:propsDragColumnAlign,rowDragRender={}},dataSet, height,dragRow },
     } = this.context;
+    const {droppableProps,renderClone} = rowDragRender
     const rowData = virtual && height ? this.processData() : data;
     const rows = data.length
       ? this.getRows(rowData, leafColumns, true, lock)
@@ -118,6 +120,22 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
           rubric: DraggableRubric,
         ) => {
           const record = dataSet.get(rubric.source.index)
+          if(renderClone && isFunction(renderClone)){
+            return renderClone({
+              provided,
+              snapshot,
+              key:record.id,
+              hidden:false,
+              lock:false,
+              indentSize,
+              prefixCls,
+              column:leafColumnsBody,
+              record, 
+              index:record.id,
+              dragColumnAlign,
+              rubric,
+            })
+          }
           return (
             <TableRow
               provided={provided}
@@ -134,7 +152,8 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
             />
           );
         }}
-        getContainerForClone={() => instance.tbody}
+        getContainerForClone={() => instance().tbody}
+        {...droppableProps}
       >
       {(droppableProvided: DroppableProvided) => (
         <tbody
@@ -227,8 +246,9 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
   ): ReactNode {
     const { prefixCls, indentSize,dragColumnAlign } = this.props;
     const {
-      tableStore: { isTree,props:{dragColumnAlign:propsDragColumnAlign},dragRow },
+      tableStore: { isTree,props:{dragColumnAlign:propsDragColumnAlign,rowDragRender = {}},dragRow },
     } = this.context;
+    const {draggableProps} = rowDragRender
     const children = isTree && (
       <ExpandedRow record={record} columns={columns} lock={lock}>
         {this.renderExpandedRows}
@@ -257,6 +277,7 @@ export default class TableTBody extends Component<TableTBodyProps, any> {
               record={record}
               index={index}
               dragColumnAlign={dragColumnAlign}
+              {...draggableProps}
             >
               {children}
             </TableRow>
