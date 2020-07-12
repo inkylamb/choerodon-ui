@@ -9,6 +9,7 @@ import {
 } from 'react-beautiful-dnd';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import measureScrollbar from 'choerodon-ui/lib/_util/measureScrollbar';
+import omit from 'lodash/omit';
 import { ColumnProps } from './Column';
 import TableCell from './TableCell';
 import Record from '../data-set/Record';
@@ -180,7 +181,7 @@ export default class TableRow extends Component<TableRowProps, any> {
 
   @autobind
   getCell(column: ColumnProps, index: number,isDragging: boolean): ReactNode {
-    const { prefixCls, record, indentSize, lock } = this.props;
+    const { prefixCls, record, indentSize, lock,dragColumnAlign } = this.props;
     const {
       tableStore: { leafColumns, rightLeafColumns },
     } = this.context;
@@ -194,6 +195,7 @@ export default class TableRow extends Component<TableRowProps, any> {
         record={record}
         indentSize={indentSize}
         isDragging={isDragging}
+        style={dragColumnAlign && column.key === DRAG_KEY ? {cursor:'move'}:{} }
       >
         {this.hasExpandIcon(columnIndex) && this.renderExpandIcon()}
       </TableCell>
@@ -376,7 +378,7 @@ export default class TableRow extends Component<TableRowProps, any> {
   }
 
   render() {
-    const { prefixCls, columns, record, lock, hidden, index, provided,snapshot  } = this.props;
+    const { prefixCls, columns, record, lock, hidden, index, provided,snapshot,dragColumnAlign  } = this.props;
     const {
       tableStore: {
         rowHeight,
@@ -386,7 +388,7 @@ export default class TableRow extends Component<TableRowProps, any> {
         selectedHighLightRow,
         mouseBatchChooseIdList,
         mouseBatchChooseState,
-        props: { onRow, rowRenderer, selectionMode,dragRow },
+        props: { onRow, rowRenderer, selectionMode,dragRow,dragColumnAlign:dragColumnAlignProps },
       },
     } = this.context;
     const { dataSet, isCurrent, key, id } = record;
@@ -439,6 +441,9 @@ export default class TableRow extends Component<TableRowProps, any> {
     }
     if(dragRow && provided && provided.draggableProps){
       rowProps.style = {...provided.draggableProps.style,...rowExternalProps.style,cursor: 'move'}
+      if(!dragColumnAlign && dragColumnAlignProps){
+        rowProps.style = omit(rowProps.style,['cursor']);
+      }
     }
 
     if (hidden) {
@@ -462,7 +467,6 @@ export default class TableRow extends Component<TableRowProps, any> {
     }
 
     const filterDrag = (columnItem:ColumnProps) => {
-      const {dragColumnAlign} = this.props
       if(dragColumnAlign){
         return columnItem.key === DRAG_KEY
       }

@@ -24,7 +24,7 @@ import { ColumnAlign } from './enum';
 import { ShowHelp } from '../field/enum';
 import Tooltip from '../tooltip';
 import autobind from '../_util/autobind';
-import {SELECTION_KEY} from './TableStore'
+import {SELECTION_KEY,DRAG_KEY} from './TableStore'
 
 export interface TableHeaderCellProps extends ElementProps {
   dataSet: DataSet;
@@ -276,6 +276,9 @@ export default class TableHeaderCell extends Component<TableHeaderCellProps, any
           dataSet,
           snapshot,
         })
+      }
+      if(column && column.key === DRAG_KEY){
+        return <Icon type="swap_vert" />
       }
       return null
     }
