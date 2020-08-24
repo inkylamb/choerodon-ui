@@ -64,6 +64,7 @@ class App extends React.Component {
       <Cascader
           dataSet={this.ds}
           name="id"
+          menuMode="single"
       />
     );
   }

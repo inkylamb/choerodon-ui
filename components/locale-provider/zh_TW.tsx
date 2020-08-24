@@ -2,7 +2,7 @@ import Pagination from '../rc-components/pagination/locale/zh_TW';
 import DatePicker from '../date-picker/locale/zh_TW';
 import TimePicker from '../time-picker/locale/zh_TW';
 import Calendar from '../calendar/locale/zh_TW';
-import Cascader from '../rc-components/cascader/locale/zh_TW.jsx';
+import Cascader from '../rc-components/cascader/locale/zh_TW';
 
 export default {
   locale: 'zh-tw',

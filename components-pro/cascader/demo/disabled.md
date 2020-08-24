@@ -49,6 +49,6 @@ function onChange(value) {
 }
 
 ReactDOM.render(
-  <Cascader value={["zhejiang", "hangzhou", "xihu"]} options={options} onChange={onChange} placeholder="Please select" />,
+  <Cascader  menuMode="single" value={["zhejiang", "hangzhou", "xihu"]} options={options} onChange={onChange} placeholder="Please select" />,
   mountNode);
 ```

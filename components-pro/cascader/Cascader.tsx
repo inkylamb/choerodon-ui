@@ -1,4 +1,4 @@
-import React, { CSSProperties, isValidElement, Key, ReactNode } from 'react';
+import React, { CSSProperties, isValidElement, Key, ReactElement, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 import isEqual from 'lodash/isEqual';
@@ -7,14 +7,15 @@ import isEmpty from 'lodash/isEmpty';
 import noop from 'lodash/noop';
 import isPlainObject from 'lodash/isPlainObject';
 import { observer } from 'mobx-react';
-import { action, observable, toJS, computed, IReactionDisposer, isArrayLike, reaction, runInAction } from 'mobx';
-import { Menus } from 'choerodon-ui/lib/rc-components/cascader';
+import { action, observable, computed, IReactionDisposer, isArrayLike, reaction, runInAction, toJS } from 'mobx';
+import { Menus, SingleMenu } from 'choerodon-ui/lib/rc-components/cascader';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 import { getConfig } from 'choerodon-ui/lib/configure';
 import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import cloneDeep from 'lodash/cloneDeep';
 import isFunction from 'lodash/isFunction';
 import isObject from 'lodash/isObject';
+import { MenuMode } from 'choerodon-ui/lib/cascader';
 import TriggerField, { TriggerFieldProps } from '../trigger-field/TriggerField';
 import autobind from '../_util/autobind';
 import { ValidationMessages } from '../validator/Validator';
@@ -121,6 +122,16 @@ export interface CascaderProps extends TriggerFieldProps {
    * 设置选项属性，如 disabled;
    */
   onOption: (props: onOptionProps) => OptionProps;
+  /** 单框弹出形式切换 */
+  menuMode?: MenuMode;
+  /** 由于渲染在body下可以方便按照业务配置弹出框的大小 */
+  singleMenuStyle: CSSProperties,
+  /** 由于渲染在body下可以方便按照业务配置超出大小样式和最小宽度等 */
+  singleMenuItemStyle: CSSProperties,
+  /** 设置需要的提示问题配置 */
+  singlePleaseRender: ({key,className,text}:{key: string,className: string,text: string}) => ReactElement<any>,
+  /** 头部可以渲染出想要的tab样子 */
+  singleMenuItemRender: (title:string) => ReactElement<any>,
 }
 
 export class Cascader<T extends CascaderProps> extends TriggerField<T> {
@@ -180,6 +191,12 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
 
   @observable menuItemWith: number;
 
+  @observable clickTab;
+
+  @computed 
+  get isClickTab() {
+    return this.clickTab;
+  }
 
   @computed
   get activeValue(): any {
@@ -195,6 +212,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     super(props, context);
     this.setActiveValue({});
     this.setItemMenuWidth(0);
+    this.setIsClickTab(false);
   }
 
   findActiveRecord(value, options) {
@@ -223,6 +241,10 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
   @action
   setActiveValue(activeValues: any) {
     this.activeValues = activeValues;
+  }
+
+  @action setIsClickTab(isClickTab: boolean) {
+    this.clickTab = isClickTab;
   }
 
   @action
@@ -395,6 +417,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       'expandTrigger',
       'dropdownMatchSelectWidth',
       'dropdownMenuStyle',
+      'menuMode',
     ]);
     return otherProps;
   }
@@ -485,7 +508,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
       options,
       textField,
       valueField,
-      props: { dropdownMenuStyle, expandTrigger, onOption },
+      props: { dropdownMenuStyle, expandTrigger, onOption, menuMode },
     } = this;
     if (!options) {
       return null;
@@ -604,22 +627,40 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     if ((this.itemMenuWidth > 0)) {
       dropdownMenuStyleMerge = { ...dropdownMenuStyle, width: pxToRem(this.itemMenuWidth) };
     }
-    return options && options.length > 0 ? (
-      <Menus
-        {...menuProps}
-        prefixCls={this.prefixCls}
-        expandTrigger={expandTrigger}
-        activeValue={selectedValues}
-        options={optGroups}
-        onSelect={this.handleMenuClick}
-        dropdownMenuColumnStyle={dropdownMenuStyleMerge}
-        visible={this.popup}
-      />
-    ) : (
+    // 渲染成单项选择还是多项选择组件以及空组件
+    if(options && options.length){
+      if(!this.multiple && menuMode === MenuMode.single ){
+        return (
+          <SingleMenu
+          {...menuProps}
+          prefixCls={this.prefixCls}
+          expandTrigger={expandTrigger}
+          activeValue={toJS(selectedValues)}
+          options={optGroups}
+          onSelect={this.handleMenuClick}
+          isTabSelected={this.isClickTab}
+          dropdownMenuColumnStyle={dropdownMenuStyleMerge}
+          visible={this.popup} />
+        )
+      }
+      return (
+        <Menus
+          {...menuProps}
+          prefixCls={this.prefixCls}
+          expandTrigger={expandTrigger}
+          activeValue={selectedValues}
+          options={optGroups}
+          onSelect={this.handleMenuClick}
+          dropdownMenuColumnStyle={dropdownMenuStyleMerge}
+          visible={this.popup}
+        />
+      )
+    }
+    return (
       <div key="no_data">
         {this.loading ? ' ' : this.getNotFoundContent()}
       </div>
-    );
+    )
   }
 
   // 遍历出父亲节点
@@ -998,23 +1039,36 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
 
   // 触发下拉框的点击事件
   @autobind
-  handleMenuClick(targetOption) {
-
+  handleMenuClick(targetOption, _menuIndex, isClickTab) {
     if (!targetOption || targetOption.disabled) {
       return;
     }
-    if (!this.isSelected(targetOption.value)) {
+    if (!this.isSelected(targetOption.value) || isClickTab) {
       if (targetOption.children) {
         this.setPopup(true);
         this.setActiveValue(targetOption.value);
+        this.setIsClickTab(isClickTab);
       } else {
-        this.choose(targetOption.value);
-        this.setActiveValue(targetOption.value);
+        if(!isClickTab){
+          this.setActiveValue(targetOption.value);
+          this.choose(targetOption.value);
+        }else{
+          this.setPopup(true);
+        }
+        this.setIsClickTab(isClickTab);
       }
     } else {
+      this.setactiveEmpty()
       this.unChoose(targetOption.value);
     }
+  }
 
+  setactiveEmpty(){
+    if(this.multiple){
+      this.setActiveValue([])
+    }else{
+      this.setActiveValue({})
+    }
   }
 
   handleOptionSelect(record: Record) {
@@ -1263,6 +1317,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
 
   @autobind
   async handlePopupHiddenChange(hidden: boolean) {
+    this.setIsClickTab(false);
     if (!hidden) {
       this.forcePopupAlign();
     }

@@ -3,6 +3,7 @@ order: 2
 title:
   zh-CN: DataSet
   en-US: 数据源
+only: true
 ---
 
 ## zh-CN
@@ -14,46 +15,56 @@ title:
 DataSet binding.
 
 ```jsx
-import { DataSet, DatePicker, DateTimePicker, Row, Col } from 'choerodon-ui/pro';
+import { Form, DateTimePicker, Button, Modal, DataSet, TextField } from 'choerodon-ui/pro';
+import moment from 'moment';
 
-function handleDataSetChange({ value, oldValue }) {
-  console.log(
-    '[dataset newValue]',
-    value && value.format(),
-    '[oldValue]',
-    oldValue && oldValue.format(),
-  );
+const App = () => {
+  const timeDs = new DataSet({
+    autoCreate: true,
+    fields:[
+      { name:'startTime',type:'dateTime',label:'开始时间',defaultValue: new Date()},
+      { name:'endTime',type:'dateTime',label:'结束时间'},
+      { name:'result',type:'string',label:'时间差'},
+      { name:'rangeTime',type:'dateTime',label:'开始时间',range: true,defaultValue: { start: new Date()}},
+      { name:'result2',type:'string',label:'时间差2'},
+    ],
+   })
+
+   const handleChangeTime = (value, oldValue, form) => {
+     const current = timeDs.current
+     current.set('result',current.get('startTime').from(current.get('endTime')) ) 
+   }
+
+   const handleChangeTimeRange = (value) => {
+     const current = timeDs.current
+     current.set('result2',value[0].from(value[1]) ) 
+   }
+
+   return (
+     <Form labelLayout="float" dataSet={timeDs} columns={3} header="Float Label">
+      <DateTimePicker mode="dateTime" name="startTime" onChange={handleChangeTime} />
+      <DateTimePicker mode="dateTime" name="endTime"  onChange={handleChangeTime} />
+      <TextField name="result" />
+      <DateTimePicker mode="dateTime" name="rangeTime" onChange={handleChangeTimeRange} />
+      <TextField name="result2" />
+      <div newLine colSpan={3}>
+        <Button type="submit">注册</Button>
+        <Button type="reset" style={{ marginLeft: 8 }}>重置</Button>
+      </div>
+    </Form>
+   )
 }
 
-const data = [
-  {
-    birth: '1984-11-22',
-    creationTime: '2017-12-22 15:00:00',
-  },
-];
-
-class App extends React.Component {
-  ds = new DataSet({
-    data,
-    fields: [{ name: 'birth', type: 'date' }, { name: 'creationTime', type: 'dateTime' }],
-    events: {
-      update: handleDataSetChange,
-    },
+const openModal = () => {
+  Modal.open({
+    drawer: true,
+    children: App(),
   });
-
-  render() {
-    return (
-      <Row gutter={10}>
-        <Col span={12}>
-          <DatePicker dataSet={this.ds} name="birth" />
-        </Col>
-        <Col span={12}>
-          <DateTimePicker dataSet={this.ds} name="creationTime" />
-        </Col>
-      </Row>
-    );
-  }
 }
 
-ReactDOM.render(<App />, mountNode);
+ReactDOM.render(
+  <Button onClick={openModal}>Open</Button>,
+  mountNode
+);
+
 ```
