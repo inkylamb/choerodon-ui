@@ -855,11 +855,13 @@ export default class DataSet extends EventManager {
   /**
    * 导出数据
    * @param object columns 导出的列
+   * @param number exportQuantity 导出数量
    */
-  async export(columns: any = {}): Promise<void> {
+  async export(columns: any = {}, exportQuantity: number = 0 ): Promise<void> {
     if (this.checkReadable(this.parent) && (await this.ready())) {
       const data = await this.generateQueryParameter();
       data._HAP_EXCEL_EXPORT_COLUMNS = columns;
+      data._EXPORT_QUANTITY = exportQuantity > 1000 ? 1000 : exportQuantity;
       const { totalCount, totalKey } = this;
       const params = { _r: Date.now(), ...this.generateOrderQueryString() };
       ObjectChainValue.set(params, totalKey, totalCount);
