@@ -158,6 +158,29 @@ export function processValue(value: any, field?: Field): any {
   return value;
 }
 
+export function processExportValue(value: any, field?: Field): any {
+  if (field) {
+    const multiple = field.get('multiple');
+    const range = field.get('range');
+    if (multiple) {
+      if (isEmpty(value)) {
+        value = [];
+      } else if (!isArray(value)) {
+        if (isString(multiple) && isString(value)) {
+          value = value.split(multiple);
+        } else {
+          value = [value];
+        }
+      }
+    }
+    if (isArray(value) && (multiple || !range)) {
+      return value.map(item => processOne(item, field)).join(',');
+    }
+    return processOne(value, field);
+  }
+  return value;
+}
+
 export function childrenInfoForDelete(json: {}, children: { [key: string]: DataSet }): {} {
   return Object.keys(children).reduce((data, name) => {
     const child = children[name];

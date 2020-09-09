@@ -282,11 +282,6 @@
     "prettier": "prettier -c --write '**/*'",
     "pretty-quick": "pretty-quick"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
       "npm run lint:script"

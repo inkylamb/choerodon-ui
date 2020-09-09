@@ -21,6 +21,7 @@ import defer from 'lodash/defer';
 import debounce from 'lodash/debounce';
 import warning from 'choerodon-ui/lib/_util/warning';
 import { getConfig } from 'choerodon-ui/lib/configure';
+import XLSX from 'xlsx';
 import localeContext, { $l } from '../locale-context';
 import axios from '../axios';
 import Record from './Record';
@@ -46,6 +47,7 @@ import {
   sliceTree,
   findRootParent,
   arrayMove,
+  processExportValue,
 } from './utils';
 import EventManager from '../_util/EventManager';
 import DataSetSnapshot from './DataSetSnapshot';
@@ -901,11 +903,26 @@ export default class DataSet extends EventManager {
   }
 
   private async doClientExport(data:any, quantity: number){
+    const columnsExport = data._HAP_EXCEL_EXPORT_COLUMNS
+    console.log(columnsExport);
     delete data._HAP_EXCEL_EXPORT_COLUMNS
     const params = {...this.generateQueryString(0),pagesize:quantity}
     const newConfig = axiosConfigAdapter('read', this, data, params);
     const result = await this.axios(newConfig);
-    console.log(result)
+    const newResult = []
+    if(result.rows.length > 0) {
+      result.rows.forEach((itemValue) => {
+        const dataItem = {}
+        for ( const columnsName in columnsExport) {
+          dataItem[columnsName] = processExportValue(itemValue[columnsName],this.getField(columnsName))
+        }
+        newResult.push(dataItem);
+      })
+    }
+    const ws = XLSX.utils.json_to_sheet(newResult); /* 新建空workbook，然后加入worksheet */
+    const wb = XLSX.utils.book_new();  /* 新建book */
+    XLSX.utils.book_append_sheet(wb, ws, "People"); /* 生成xlsx文件(book,sheet数据,sheet命名) */
+    XLSX.writeFile(wb, "sheetjs.xlsx"); /* 写文件(book,xlsx文件名称) */
   }
 
   /**
