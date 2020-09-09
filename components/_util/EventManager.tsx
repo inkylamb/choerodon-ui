@@ -63,6 +63,11 @@ export default class EventManager {
     return this;
   }
 
+  /**
+   * the event handler
+   * @param eventName string
+   * @param rest dataSet 
+   */
   fireEvent(eventName: string, ...rest: any[]): Promise<boolean> {
     const events: handler[] = this.events[eventName.toLowerCase()];
     return events

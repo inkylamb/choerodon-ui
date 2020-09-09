@@ -18,7 +18,78 @@ title:
 Virtual Scroll.
 
 ```jsx
-import { DataSet, Table } from 'choerodon-ui/pro';
+import { DataSet, Button, Table } from 'choerodon-ui/pro';
+import XLSX from 'xlsx';
+
+    const initColumn = [{
+        title: '姓名',
+        dataIndex: 'name',
+        key: 'name',
+        className: 'text-monospace',
+    }, {
+        title: '年级',
+        dataIndex: 'grade',
+        key: 'grade',
+    }, {
+        title: '部门',
+        dataIndex: 'department',
+        key: 'department',
+    }];
+
+
+const  attendanceInfoList = [
+    {
+        name:"张三",
+        grade:"2017级",
+        department:"前端部门",
+
+    },
+    {
+        name:"李四",
+        grade:"2017级",
+        department:"程序部门",
+
+    }];
+
+
+function exportExcel(headers, data, fileName = '请假记录表.xlsx') {
+    const _headers = headers
+        .map((item, i) => Object.assign({}, { key: item.key, title: item.title, position: String.fromCharCode(65 + i) + 1 }))
+        .reduce((prev, next) => Object.assign({}, prev, { [next.position]: { key: next.key, v: next.title } }), {});
+
+    const _data = data
+        .map((item, i) => headers.map((key, j) => Object.assign({}, { content: item[key.key], position: String.fromCharCode(65 + j) + (i + 2) })))
+        // 对刚才的结果进行降维处理（二维数组变成一维数组）
+        .reduce((prev, next) => prev.concat(next))
+        // 转换成 worksheet 需要的结构
+        .reduce((prev, next) => Object.assign({}, prev, { [next.position]: { v: next.content } }), {});
+
+    // 合并 headers 和 data
+    const output = Object.assign({}, _headers, _data);
+    // 获取所有单元格的位置
+    const outputPos = Object.keys(output);
+    // 计算出范围 ,["A1",..., "H2"]
+    const ref = `${outputPos[0]}:${outputPos[outputPos.length - 1]}`;
+
+    // 构建 workbook 对象
+    const wb = {
+        SheetNames: ['mySheet'],
+        Sheets: {
+            mySheet: Object.assign(
+                {},
+                output,
+                {
+                    '!ref': ref,
+                    '!cols': [{ wpx: 45 }, { wpx: 100 }, { wpx: 200 }, { wpx: 80 }, { wpx: 150 }, { wpx: 100 }, { wpx: 300 }, { wpx: 300 }],
+                },
+            ),
+        },
+    };
+
+    // 导出 Excel
+    XLSX.writeFile(wb, fileName);
+}
+
 
 class App extends React.Component {
   userDs = new DataSet({
@@ -142,6 +213,8 @@ class App extends React.Component {
     ],
   });
 
+  
+
   render() {
     const columns = [{
       name: 'userid',
@@ -174,11 +247,12 @@ class App extends React.Component {
     }];
 
     // 设置 virtualSpin 开启滚动loading效果，与 table spin 效果一致
-    
+    renderButton = (<Button icon="graphic_eq" key="none"  onClick={() => {exportExcel(initColumn, attendanceInfoList,"人员名单.xlsx")}}>导出</Button>);
+
     return (
       <Table
         key="user"
-        virtual
+        buttons={[this.renderButton,'save']}
         selectionMode='click'
         dataSet={this.userDs}
         style={{ height: 300 }}

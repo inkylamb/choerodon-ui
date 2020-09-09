@@ -58,6 +58,7 @@ import {
   FieldType,
   RecordStatus,
   SortOrder,
+  ExportMode,
 } from './enum';
 import { Lang } from '../locale-context/enum';
 import isEmpty from '../_util/isEmpty';
@@ -200,6 +201,10 @@ export interface DataSetProps {
    * 导出请求的url
    */
   exportUrl?: string;
+  /**
+   * 导出模式
+   */
+  exportMode?: ExportMode;
   /**
    * 自定义CRUD的请求配置
    */
@@ -451,6 +456,13 @@ export default class DataSet extends EventManager {
     runInAction(() => {
       set(this.props, 'exportUrl', url);
     });
+  }
+  
+  /**
+   * 服务端导出还是客户端导出
+   */
+  get exportMode(): ExportMode {
+    return this.props.exportMode || getConfig('exportMode') || ExportMode.server;
   }
 
   set transport(transport: Transport) {
@@ -861,7 +873,6 @@ export default class DataSet extends EventManager {
     if (this.checkReadable(this.parent) && (await this.ready())) {
       const data = await this.generateQueryParameter();
       data._HAP_EXCEL_EXPORT_COLUMNS = columns;
-      data._EXPORT_QUANTITY = exportQuantity > 1000 ? 1000 : exportQuantity;
       const { totalCount, totalKey } = this;
       const params = { _r: Date.now(), ...this.generateOrderQueryString() };
       ObjectChainValue.set(params, totalKey, totalCount);
@@ -874,12 +885,27 @@ export default class DataSet extends EventManager {
             data: newConfig.data,
           })) !== false
         ) {
-          doExport(this.axios.getUri(newConfig), newConfig.data, newConfig.method);
+          const ExportQuantity = exportQuantity > 1000 ? 1000 : exportQuantity;
+          this.doClientExport(data, ExportQuantity)
+          // if(this.exportMode === ExportMode.client){
+          //   const ExportQuantity = exportQuantity > 1000 ? 1000 : exportQuantity;
+          //   this.doClientExport(data, ExportQuantity)
+          // }else {
+          //   doExport(this.axios.getUri(newConfig), newConfig.data, newConfig.method);
+          // }
         }
       } else {
         warning(false, 'Unable to execute the export method of dataset, please check the ');
       }
     }
+  }
+
+  private async doClientExport(data:any, quantity: number){
+    delete data._HAP_EXCEL_EXPORT_COLUMNS
+    const params = {...this.generateQueryString(0),pagesize:quantity}
+    const newConfig = axiosConfigAdapter('read', this, data, params);
+    const result = await this.axios(newConfig);
+    console.log(result)
   }
 
   /**

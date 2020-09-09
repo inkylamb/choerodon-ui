@@ -43,7 +43,7 @@ ReactDOM.render(
     <EmailField label="邮箱" name="email" />
     <CodeArea rowSpan={2} colSpan={2} rows={4} label="简介" name="description" required />
     <UrlField label="个人主页" name="homepage" required />
-    <DatePicker label="生日" name="birth" required />
+    <DatePicker readOnly label="生日" name="birth" required />
     <div newLine colSpan={3}>
       <Button type="submit">注册</Button>
       <Button type="reset" style={{ marginLeft: 8 }}>重置</Button>

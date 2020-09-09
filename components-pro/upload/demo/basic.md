@@ -3,6 +3,7 @@ order: 0
 title:
   zh-CN: 基本使用
   en-US: Basic Usage
+only: true
 ---
 
 ## zh-CN
@@ -25,7 +26,8 @@ const props = {
   multiple: true,
   accept: ['.deb', '.txt', '.pdf', 'image/*'],
   uploadImmediately: true,
-  showUploadList: false,
+  showUploadList: true,
+  beforeUpload:() => {return false},
 };
 
 ReactDOM.render(

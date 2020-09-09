@@ -286,7 +286,12 @@ export function checkFieldType(value: any, field: Field): boolean {
 }
 
 let iframe;
-
+/**
+ * 目前定义为服务端请求的方法
+ * @param url 导出地址
+ * @param data 导出传递参数
+ * @param method 默认post请求
+ */
 export function doExport(url, data, method = 'post') {
   if (!iframe) {
     iframe = document.createElement('iframe');
