@@ -62,38 +62,12 @@ export default class Screening extends DataSetComponent<SpinProps> {
         <div className={`${prefixCls}-content`}>
           <div className={`${prefixCls}-scroll`}>
             <Row>
-                <Col span={6} >111</Col>
-                <Col span={6} >112</Col>
-                <Col span={6} >113</Col>
-                <Col span={6} >114</Col>
-                <Col span={6} >115</Col>
-                <Col span={6} >116</Col>
-                <Col span={6} >117</Col>
-                <Col span={6} >118</Col>
-                <Col span={6} >111</Col>
-                <Col span={6} >112</Col>
-                <Col span={6} >113</Col>
-                <Col span={6} >114</Col>
-                <Col span={6} >115</Col>
-                <Col span={6} >116</Col>
-                <Col span={6} >117</Col>
-                <Col span={6} >118</Col>
-                <Col span={6} >111</Col>
-                <Col span={6} >112</Col>
-                <Col span={6} >113</Col>
-                <Col span={6} >114</Col>
-                <Col span={6} >115</Col>
-                <Col span={6} >116</Col>
-                <Col span={6} >117</Col>
-                <Col span={6} >118</Col>
-                <Col span={6} >111</Col>
-                <Col span={6} >112</Col>
-                <Col span={6} >113</Col>
-                <Col span={6} >114</Col>
-                <Col span={6} >115</Col>
-                <Col span={6} >116</Col>
-                <Col span={6} >117</Col>
-                <Col span={6} >118</Col>
+                <Col span={4} >111</Col>
+                <Col span={4} >112</Col>
+                <Col span={4} >113</Col>
+                <Col span={4} >114</Col>
+                <Col span={4} >115</Col>
+                <Col span={4} >116</Col>
             </Row>
           </div>
         </div>

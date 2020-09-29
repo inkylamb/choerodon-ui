@@ -3,6 +3,7 @@ order: 2
 title:
   zh-CN: 跳转
   en-US: QuickJumper
+only: true
 ---
 
 ## zh-CN

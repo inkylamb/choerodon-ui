@@ -385,7 +385,7 @@ export default class Select extends Component {
 
     this.fireChange(value, extraInfo);
     // 选中后判断是否需要清楚搜索值
-    if(props.autoClearSearchValue ){
+    if(props.autoClearSearchValue && isMultiple(props) ){
       this.clearSearchInput()
     }
     if (props.inputValue && isEmpty(this.props.searchValue)) {

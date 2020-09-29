@@ -14,7 +14,7 @@ title:
 Tree Data.
 
 ```jsx
-import { DataSet, Table, Button, Icon } from 'choerodon-ui/pro';
+import { DataSet, Table, Button, Icon,CheckBox } from 'choerodon-ui/pro';
 import { observer } from 'mobx-react';
 
 const { Column } = Table;
@@ -40,11 +40,32 @@ class AddChildButton extends React.Component {
   }
 }
 
+
+
+@observer
+class CheckBoxHeader extends React.Component {
+  render() {
+    const { dataSet, onChange, checkedValue } = this.props;
+    const {checkField} = dataSet.props;
+    let indeterminate = true;
+    let value = checkedValue
+    if(dataSet.treeRecords.every((recordItem) => recordItem.get(checkField) === false)){
+      indeterminate = false;
+    } 
+    if(dataSet.treeRecords.every((recordItem) => recordItem.get(checkField) === true )) {
+      indeterminate = false;
+      value = true
+    }
+    return <CheckBox onChange={onChange} indeterminate={indeterminate} checked={!!value}  />;
+  }
+}
+
 class App extends React.Component {
   ds = new DataSet({
     primaryKey: 'id',
     queryUrl: '/tree.mock',
     submitUrl: '/tree.mock',
+    selection: false, // 不会渲染选择box
     autoQuery: true,
     parentField: 'parentId',
     idField: 'id',
@@ -66,10 +87,10 @@ class App extends React.Component {
   });
 
   state = {
-    expandIconColumnIndex: 0,
     border: true,
     mode: 'tree',
     expandedRender: false,
+    checked: false,
   };
 
   handleCreateChild = () => {
@@ -78,15 +99,19 @@ class App extends React.Component {
 
   handleChangeExpandRender = () => this.setState({ expandedRender: !this.state.expandedRender });
 
-  handleChangeExpandIconIndex = () =>
-    this.setState({
-      expandIconColumnIndex:
-        this.state.expandIconColumnIndex > 2 ? 0 : this.state.expandIconColumnIndex + 1,
-    });
 
   handleChangeBorder = () => this.setState({ border: !this.state.border });
 
   handleChangeMode = () => this.setState({ mode: this.state.mode === 'tree' ? 'list' : 'tree' });
+
+  headerCheck = (value,oldValue) => {
+    const {checkField} = this.ds.props;
+    const { checked } = this.state;
+     this.ds.records.forEach(record =>{
+        record.set(checkField,!checked);
+      })
+    this.setState({ checked: !checked });
+  }
 
   buttons = [
     'add',
@@ -114,19 +139,20 @@ class App extends React.Component {
   ];
 
   render() {
-    const { mode, expandIconColumnIndex, border, expandedRender } = this.state;
+    const { mode, border, expandedRender,checked } = this.state;
+    console.log(checked)
     return (
       <Table
         mode={mode}
         buttons={this.buttons}
         dataSet={this.ds}
-        expandIconColumnIndex={expandIconColumnIndex}
+        expandIconColumnIndex={1}
         border={border}
         expandedRowRenderer={expandedRender && expandedRowRenderer}
       >
+        <Column header={<CheckBoxHeader checked={checked} onChange={(value,oldValue) => {this.headerCheck(value,oldValue,this.ds)}} dataSet={this.ds} />} width={50} name="ischecked" editor />
         <Column name="text" editor renderer={iconRenderer} width={450} />
         <Column name="url" editor />
-        <Column name="ischecked" editor />
         <Column name="expand" editor />
         <Column header="权限设置" width={150} align="center" />
       </Table>

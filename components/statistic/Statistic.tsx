@@ -25,7 +25,7 @@ interface CompoundedComponent
     Countdown: typeof Countdown;
 }
 
-const Statistic = forwardRef((props: StatisticProps) => {
+const Statistic = forwardRef((props: StatisticProps,_ref) => {
   const {
     prefixCls : customizePrefixCls,
     className,

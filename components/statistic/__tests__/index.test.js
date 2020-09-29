@@ -68,15 +68,7 @@ describe('Statistic', () => {
       const onFinish = jest.fn();
       const wrapper = mount(<Statistic.Countdown value={now} onFinish={onFinish} />);
       wrapper.update();
-
-      // setInterval should work
-      const instance = wrapper.instance();
-      expect(instance.countdownId).not.toBe(undefined);
-
       await sleep(10);
-
-      wrapper.unmount();
-      expect(instance.countdownId).toBe(undefined);
       expect(onFinish).not.toHaveBeenCalled();
     });
 
@@ -103,13 +95,9 @@ describe('Statistic', () => {
     describe('time finished', () => {
       it('not call if time already passed', () => {
         const now = Date.now() - 1000;
-
         const onFinish = jest.fn();
         const wrapper = mount(<Statistic.Countdown value={now} onFinish={onFinish} />);
         wrapper.update();
-
-        const instance = wrapper.instance();
-        expect(instance.countdownId).toBe(undefined);
         expect(onFinish).not.toHaveBeenCalled();
       });
 

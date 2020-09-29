@@ -3,6 +3,7 @@ order: 0
 title:
   zh-CN: 基本
   en-US: Basic
+only: true
 ---
 
 ## zh-CN
@@ -23,8 +24,12 @@ import {
   Modal,
   Button,
   notification,
+  TextField,
+  Form,
   AutoComplete,
 } from 'choerodon-ui/pro';
+
+import { observer } from 'mobx-react';
 
 const { Column } = Table;
 
@@ -95,6 +100,7 @@ const codeDescriptionDynamicProps = {
   },
 };
 
+@observer
 class App extends React.Component {
   options = new DataSet({
     fields: [{
@@ -176,6 +182,7 @@ class App extends React.Component {
         label: '年龄',
         unique: 'uniqueGroup',
         max: 100,
+        min:50,
         step: 1,
         help: '用户年龄，可以排序',
       },
@@ -402,11 +409,11 @@ class App extends React.Component {
     return (
       <Table
         key="user"
+        rowHeight="auto"
         buttons={buttons}
         dataSet={this.userDs}
         autoMaxWidth={true}
         header="User"
-        style={{ height: 200 }}
         onRow={({ dataSet, record, index, expandedRow }) => {
           if (index === 2) {
             return {
@@ -426,10 +433,16 @@ class App extends React.Component {
           lock
           sortable
         />
-        <Column name="age" editor width={150} sortable footer={renderColumnFooter} />
+        <Column name="age" editor renderer={({record}) => { record.set('age',51); return 51 }} width={150} sortable footer={renderColumnFooter} />
         <Column name="email" editor={() => { return <AutoComplete onFocus={this.handeValueChange} onInput={this.handeValueChange} options={this.options} /> }} />
         <Column name="enable" editor width={50} minWidth={50} lock />
-        <Column name="name" editor width={150} sortable tooltip="always" />
+        <Column name="name"  renderer={() => (
+          <Form id="basic">
+            <TextField
+              addonBefore="+86"
+            />
+          </Form>
+        )} width={150} sortable tooltip="always" />
         <Column name="code" editor width={150} sortable />
         <Column name="code_code" editor width={150} tooltip="overflow" />
         <Column name="code_select" editor width={150} />

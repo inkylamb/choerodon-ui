@@ -14,7 +14,8 @@ title:
 Grouped Columns.
 
 ```jsx
-import { DataSet, Table } from 'choerodon-ui/pro';
+import { DataSet, Table, Select } from 'choerodon-ui/pro';
+import React from 'react';
 
 const { Column } = Table;
 
@@ -56,11 +57,13 @@ class App extends React.Component {
 
   render() {
     return (
-      <Table dataSet={this.ds}>
+      <Table queryFields={{sex: (<Select dropdownMatchSelectWidth={false} dropdownMenuStyle={{width: '1000px'}} />)}} dataSet={this.ds}>
+       <Column name="name" editor width={150} />
         <Column header="组合">
-          <Column name="name" editor width={450} />
+          <Column name="name" editor width={150} />
           <Column name="age" editor />
         </Column>
+        <Column name="name" editor width={150} />
         <Column header="组合3">
           <Column header="组合2">
             <Column name="sex" editor />
@@ -68,6 +71,7 @@ class App extends React.Component {
           </Column>
           <Column name="sexMultiple" editor />
         </Column>
+        <Column name="name" editor width={150} />
       </Table>
     );
   }

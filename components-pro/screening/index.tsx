@@ -58,7 +58,9 @@ export default class Screening extends DataSetComponent<SpinProps> {
 
     
     return (
-       <ScreeningItem />
+       <>
+         <ScreeningItem />
+       </>
     );
   }
 }
