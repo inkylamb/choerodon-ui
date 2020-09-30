@@ -6,23 +6,43 @@ import ObserverCheckBox from '../check-box/CheckBox';
 import { ElementProps } from '../core/ViewComponent';
 
 export interface Info {
-    key: string;
-    valye: any;
+    key: string | number | undefined;
+    value: any;
+}
+
+export interface ColSize {
+  span?: number;
+  order?: number;
+  offset?: number;
+  push?: number;
+  pull?: number;
 }
 
 export interface ScreeningOptionProps extends ElementProps {
-    selectedKeys: Array<string>;
+    selectedKeys?: Array<string | number | undefined>;
     onSelect?: (info:Info) => void;
     onClick?: (info:Info)=> void;
     onDeselect?: (info:Info) => void;
     onMouseEnter?: (info:Info) => void;
     onMouseLeave?: (info:Info) => void;
-    disabled: boolean;
-    children: React.ReactElement<any>;
-    active: boolean;
-    multiple: true
-    isSelected: boolean;
-    value: any;
+    onMouseDown?: (info:Info) => void;
+    disabled?: boolean;
+    children?: React.ReactElement<any> | string;
+    active?: boolean;
+    multiple?: true;
+    isSelected?: boolean;
+    value?: any;
+    span?: number;
+    order?: number;
+    offset?: number;
+    push?: number;
+    pull?: number;
+    xs?: number | ColSize;
+    sm?: number | ColSize;
+    md?: number | ColSize;
+    lg?: number | ColSize;
+    xl?: number | ColSize;
+    xxl?: number | ColSize;
 }
 
 export default class ScreeningOption extends Component<ScreeningOptionProps> {
@@ -37,33 +57,31 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
   }
 
 
-  onMouseLeave(e) {
-    const { eventKey, onItemHover, onMouseLeave } = this.props;
-    onItemHover({
-      key: eventKey,
-      hover: false,
-    });
-    onMouseLeave({
-      key: eventKey,
-      domEvent: e,
-    });
+  onMouseLeave() {
+    const { key,value, onMouseLeave } = this.props;
+    const info : Info = {
+      key,
+      value,
+    };
+    if(onMouseLeave){
+      onMouseLeave(info);
+    }
   };
 
-  onMouseEnter(e) {
-    const { eventKey, onItemHover, onMouseEnter } = this.props;
-    onItemHover({
-      key: eventKey,
-      hover: true,
-    });
-    onMouseEnter({
-      key: eventKey,
-      domEvent: e,
-    });
+  onMouseEnter() {
+    const { key,value, onMouseEnter } = this.props;
+    const info : Info = {
+      key,
+      value,
+    };
+    if(onMouseEnter){
+      onMouseEnter(info);
+    }
   };
 
   onClick() {
     const { key, multiple, onClick, onSelect, onDeselect, value, isSelected } = this.props;
-    const info = {
+    const info : Info = {
       key,
       value,
     };
@@ -92,6 +110,17 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
         style,
         multiple,
         onMouseDown,
+        span,
+        order,
+        offset,
+        push,
+        pull,
+        xs,
+        sm,
+        md,
+        lg,
+        xl,
+        xxl,
     } = this.props;
     const ScreeningOptionPrefix = `${prefixCls}-screening-option`
 
@@ -107,6 +136,18 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     const attrs = {
       key,
       className,
+      span,
+      order,
+      offset,
+      push,
+      pull,
+      xs,
+      sm,
+      md,
+      lg,
+      xl,
+      xxl,
+      prefixCls,
     };
     let mouseEvent = {};
     if (!disabled) {
