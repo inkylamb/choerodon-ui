@@ -7,9 +7,11 @@ import Col from 'choerodon-ui/lib/col';
 import Icon from 'choerodon-ui/lib/icon';
 import {observable, runInAction, action} from 'mobx';
 import ScreeningItem from './ScreeningItem'; 
+import DataSet from '../data-set';
 
 
 export interface SpinProps extends DataSetComponentProps {
+  dataSet: DataSet;
 }
 
 @observer
@@ -59,7 +61,7 @@ export default class Screening extends DataSetComponent<SpinProps> {
     
     return (
        <>
-         <ScreeningItem />
+         <ScreeningItem name="sex" dataSet={dataSet} />
        </>
     );
   }

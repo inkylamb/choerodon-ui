@@ -283,8 +283,7 @@
     "prettier": "prettier -c --write '**/*'",
     "pretty-quick": "pretty-quick"
   },
-  "husky": {
-  },
+  "husky": {},
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
       "npm run lint:script"

@@ -27,16 +27,22 @@ function handleDataSetChange({ record, name, value, oldValue }) {
   );
 }
 
+function handQueryDataSet({ dataSet, params, data }){
+  console.log(1111111);
+  console.log(data);
+}
+
 
 class App extends React.Component {
 
   ds = new DataSet({
     autoCreate: true,
     fields: [
-      { name: 'sex', type: 'string', lookupCode: 'HR.EMPLOYEE_GENDER' },
+      { name: 'sex', type: 'string', lookupCode: 'WEAR' },
     ],
-    events: {
+    events: { 
       update: handleDataSetChange,
+      query: handQueryDataSet,
     },
   });
 

@@ -6,12 +6,15 @@ import warning from 'choerodon-ui/lib/_util/warning';
 import {observable, runInAction, action, computed} from 'mobx';
 import isNumber from 'lodash/isNumber';
 import defaultTo from 'lodash/defaultTo';
+import { noop, omit } from 'lodash';
 import DataSetComponent, { DataSetComponentProps } from '../data-set/DataSetComponent';
 import ScreeningOption from './ScreeningOption';
 import DataSet from '../data-set/DataSet';
 import Field from '../data-set/Field';
 import Record from '../data-set/Record';
 import normalizeOptions from '../option/normalizeOptions';
+import autobind from '../_util/autobind';
+import isEmpty from '../_util/isEmpty';
 
 
 const disabledField = '__disabled';
@@ -29,6 +32,7 @@ export interface ScreeningItemProps extends DataSetComponentProps {
   valueField: string;
   multiple: boolean;
   dataSet: DataSet;
+  name: string;
 }
 
 @observer
@@ -36,7 +40,9 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
 
   static displayName = 'Screening';
 
-  @observable iconExpanded: boolean 
+  @observable iconExpanded: boolean;
+
+  @observable observableProps: any;
 
   constructor(props, context) {
     super(props, context);
@@ -76,6 +82,7 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
 
   @computed
   get name(): string | undefined {
+    console.log(this.observableProps);
     return this.observableProps.name;
   }
 
@@ -104,6 +111,12 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
   getProp(propName: string) {
     const { field } = this;
     return defaultTo(field && field.get(propName), this.props[propName]);
+  }
+
+  @autobind
+  handleChange(e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   @computed
@@ -147,12 +160,55 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
   }
 
   getScreeningOption = () => {
-    console.log(this.options)
-    return (
-      <ScreeningOption span={4} key="111"> 
-          111111111
-      </ScreeningOption>
-    )
+    const {
+      options,
+      textField,
+      valueField,
+    } = this;
+    if(!options){
+      return null;
+    }
+    const { data } = options;
+
+    if(!isEmpty(data)){
+      return data.map((record) => {
+        const value = record.get(valueField);
+        const text = record.get(textField);
+        return (
+          <ScreeningOption value={value} span={4} key={`${record.id}`}> 
+              {text}
+          </ScreeningOption>
+        )
+      })
+    }
+    return null
+  }
+
+  getObservableProps(props, context) {
+    console.log(1111111);
+    return {
+      name: props.name,
+      record: 'record' in props ? props.record : context.record,
+      dataSet: 'dataSet' in props ? props.dataSet : context.dataSet,
+      dataIndex: defaultTo(props.dataIndex, context.dataIndex),
+      value: this.observableProps || 'value' in props ? props.value : props.defaultValue,
+    };
+  }
+
+  getOtherProps() {
+    const otherProps = omit(super.getOtherProps(), [
+      'record',
+      'defaultValue',
+      'dataIndex',
+      'onEnterDown',
+      'onClear',
+      'readOnly',
+      'renderer',
+      'pristine',
+      'trim',
+    ]);
+    otherProps.onChange = !this.isDisabled() ? this.handleChange : noop;
+    return otherProps;
   }
 
   render() {
