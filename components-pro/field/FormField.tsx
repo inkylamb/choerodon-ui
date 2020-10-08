@@ -428,7 +428,6 @@ export class FormField<T extends FormFieldProps> extends DataSetComponent<T> {
       warning(!observableProps.dataSet, `${displayName} with binding DataSet need property name.`);
       warning(!observableProps.record, `${displayName} with binding Record need property name.`);
     }
-    console.log(name);
     if (name) {
       const recordField = record ? record.getField(name) : undefined;
       const dsField = dataSet ? dataSet.getField(name) : undefined;

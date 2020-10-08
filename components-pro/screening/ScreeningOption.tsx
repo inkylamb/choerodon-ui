@@ -1,13 +1,16 @@
-import React, { Component } from 'react';
+import React, { Component, CSSProperties, Key } from 'react';
 import classNames from 'classnames';
 import Col from 'choerodon-ui/lib/col';
 import noop from 'lodash/noop';
+import { observer } from 'mobx-react';
+import { action, observable, runInAction, toJS } from 'mobx';
 import ObserverCheckBox from '../check-box/CheckBox';
 import { ElementProps } from '../core/ViewComponent';
+import Record from '../data-set/Record';
 
 export interface Info {
     key: string | number | undefined;
-    value: any;
+    value: any | Record;
 }
 
 export interface ColSize {
@@ -19,6 +22,7 @@ export interface ColSize {
 }
 
 export interface ScreeningOptionProps extends ElementProps {
+    optionKey?:Key;
     selectedKeys?: Array<string | number | undefined>;
     onSelect?: (info:Info) => void;
     onClick?: (info:Info)=> void;
@@ -28,10 +32,10 @@ export interface ScreeningOptionProps extends ElementProps {
     onMouseDown?: (info:Info) => void;
     disabled?: boolean;
     children?: React.ReactElement<any> | string;
-    active?: boolean;
-    multiple?: true;
+    active?: boolean;CSSProperties
+    multiple?: boolean;
     isSelected?: boolean;
-    value?: any;
+    value?: any | Record;
     span?: number;
     order?: number;
     offset?: number;
@@ -45,22 +49,32 @@ export interface ScreeningOptionProps extends ElementProps {
     xxl?: number | ColSize;
 }
 
+@observer
 export default class ScreeningOption extends Component<ScreeningOptionProps> {
     
   static displayName: 'ScreeningOption';
 
-  static defaultProps: ScreeningOptionProps = {
+  static defaultProps = {
     onSelect: noop,
     onMouseEnter: noop,
     onMouseLeave: noop,
     onMouseDown: noop,
+    isSelected: false,
+  };
+
+  @observable isSelected
+
+  constructor(props, context) {
+    super(props, context);
+    runInAction(() => {
+      this.isSelected = this.props.isSelected ;
+    })
   }
 
-
-  onMouseLeave() {
-    const { key,value, onMouseLeave } = this.props;
+  onMouseLeave = () => {
+    const { optionKey,value, onMouseLeave } = this.props;
     const info : Info = {
-      key,
+      key:optionKey,
       value,
     };
     if(onMouseLeave){
@@ -68,10 +82,10 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     }
   };
 
-  onMouseEnter() {
-    const { key,value, onMouseEnter } = this.props;
+  onMouseEnter = () => {
+    const { optionKey,value, onMouseEnter } = this.props;
     const info : Info = {
-      key,
+      key:optionKey,
       value,
     };
     if(onMouseEnter){
@@ -79,21 +93,24 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     }
   };
 
-  onClick() {
-    const { key, multiple, onClick, onSelect, onDeselect, value, isSelected } = this.props;
+  @action
+  onClick = () =>  {
+    const { optionKey, multiple, onClick, onSelect, onDeselect, value } = this.props;
     const info : Info = {
-      key,
+      key:optionKey,
       value,
     };
+    
     if(onSelect && onClick) {
         onClick(info);
         if (multiple ) {
-          if (isSelected && onDeselect ) {
+          if (this.isSelected && onDeselect ) {
             onDeselect(info);
           } else {
             onSelect(info);
           }
-        } else if (!isSelected) {
+          this.isSelected = !this.isSelected;
+        } else {
           onSelect(info);
         }
       };
@@ -103,9 +120,8 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     const { 
         prefixCls, 
         disabled, 
-        isSelected,
         children,
-        key,
+        optionKey,
         active,
         style,
         multiple,
@@ -123,7 +139,7 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
         xxl,
     } = this.props;
     const ScreeningOptionPrefix = `${prefixCls}-screening-option`
-
+    const isSelected = this.isSelected
     const className = classNames(
         ScreeningOptionPrefix,
         {
@@ -134,7 +150,7 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     );
     
     const attrs = {
-      key,
+      optionKey,
       className,
       span,
       order,
@@ -157,8 +173,10 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
           onMouseEnter: this.onMouseEnter,
           onMouseDown,
         };
-      }
-    const checkbox = multiple ? <ObserverCheckBox disabled={disabled} checked={isSelected} tabIndex={-1} /> : null;
+    }
+
+    
+    const checkbox = multiple ? <ObserverCheckBox readOnly checked={toJS(isSelected)} tabIndex={-1} /> : null;
 
     return (
         <Col

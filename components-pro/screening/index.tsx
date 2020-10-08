@@ -1,13 +1,14 @@
 import React from 'react';
 import { observer } from 'mobx-react';
-import { DataSetStatus } from '../data-set/enum';
+import { observable, computed, action, runInAction, toJS } from 'mobx';
+import Tag from 'choerodon-ui/lib/tag';
 import DataSetComponent, { DataSetComponentProps } from '../data-set/DataSetComponent';
-import Row from 'choerodon-ui/lib/row';
-import Col from 'choerodon-ui/lib/col';
-import Icon from 'choerodon-ui/lib/icon';
-import {observable, runInAction, action} from 'mobx';
 import ScreeningItem from './ScreeningItem'; 
 import DataSet from '../data-set';
+import merge from 'lodash/merge';
+import isEmpty from '../_util/isEmpty';
+import { isNil, isNumber } from 'lodash';
+import Record from '../data-set/Record';
 
 
 export interface SpinProps extends DataSetComponentProps {
@@ -18,12 +19,17 @@ export interface SpinProps extends DataSetComponentProps {
 export default class Screening extends DataSetComponent<SpinProps> {
   static displayName = 'Screening';
 
-  @observable iconExpanded: boolean 
+  @observable mergeValue: any 
+
+  emptyValue?: any = null;
 
   constructor(props, context) {
     super(props, context);
+    const { dataSet } = props 
     runInAction(() => {
-      this.iconExpanded = false ;
+      if(dataSet){
+        this.mergeValue = dataSet.current.toData()
+      }
     });
   }
 
@@ -31,37 +37,79 @@ export default class Screening extends DataSetComponent<SpinProps> {
     suffixCls: 'Screening',
   };
 
+    /**
+   * return the record: dataIndex record, current, undefined
+   */
+  @computed
+  get record(): Record | undefined {
+    const { record, dataSet, dataIndex } = this.observableProps;
+    if (record) {
+      return record;
+    }
+    if (dataSet) {
+      if (isNumber(dataIndex)) {
+        return dataSet.get(dataIndex);
+      }
+      return dataSet.current;
+    }
+    return undefined;
+  }
+
+
+  handChange=()=> {
+    const { dataSet } = this.props;
+  }
+
   @action
-  handleExpanedClick = () => {
-    this.iconExpanded = !this.iconExpanded
+  handComfirm = ({value,text,field}) => {
+    const fieldName = field.get('name')
+    if(fieldName){
+      this.mergeValue = {...this.mergeValue,[fieldName]:{
+        value,text,
+      }}
+    }
+    console.log(field);
+  }
+
+  @action
+  handleCloseItem = (x) => {
+    const { dataSet } = this.props;
+    if (dataSet && x) {
+      (this.record || dataSet.create({})).set(x, this.emptyValue);
+    }
+    this.forceUpdate()
+    console.log(dataSet.toData())
   }
 
   render() {
-    const { dataSet, ...otherProps } = this.props;
-    const { iconExpanded } = this;
-    const props: SpinProps = {};
-
-    const expandedButton = () => {
-      if(iconExpanded === true ){
-        return (
-          <>
-            <span>更多</span>
-            <Icon type="expand_less" />
-          </>
-        )
+    const { dataSet } = this.props;
+    const mergeValue = toJS(this.mergeValue)
+    const renderTag = () => {
+      const tagChildren = []
+      for(const x in mergeValue){
+        if(x !== '__dirty'){
+          if(!isNil(mergeValue[x]) && mergeValue[x] !== {}){
+            tagChildren.push(<Tag afterClose={(_e)=> {this.handleCloseItem(x)}} key={x} closable>
+              {mergeValue[x].text}
+            </Tag>)
+          }
+        }
       }
       return (
-        <>
-         <span>收起</span>
-         <Icon type="expand_more" />
-        </>
+        <div>
+          {tagChildren}
+        </div>
       )
     }
-
-    
     return (
        <>
-         <ScreeningItem name="sex" dataSet={dataSet} />
+         {renderTag()}
+         <ScreeningItem 
+            onComfirm={this.handComfirm}  
+            onChange={this.handChange} 
+            name="sex" 
+            dataSet={dataSet} 
+         />
        </>
     );
   }

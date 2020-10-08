@@ -38,7 +38,7 @@ class App extends React.Component {
   ds = new DataSet({
     autoCreate: true,
     fields: [
-      { name: 'sex', type: 'string', lookupCode: 'WEAR' },
+      { name: 'sex', type: 'string', lookupCode: 'WEAR',label:'衣服分类' },
     ],
     events: { 
       update: handleDataSetChange,

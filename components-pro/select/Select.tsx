@@ -966,6 +966,7 @@ export class Select<T extends SelectProps> extends TriggerField<T> {
       this.unChoose(value);
     } else {
       this.choose(value);
+      console.log(value);
     }
   }
 
