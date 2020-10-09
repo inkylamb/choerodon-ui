@@ -16,6 +16,8 @@ DataSet Binding.
 ````jsx
 import { Screening, DataSet } from 'choerodon-ui/pro';
 
+const ScreeningItem = Screening.ScreeningItem
+
 function handleDataSetChange({ record, name, value, oldValue }) {
   console.log(
     '[dataset newValue]',
@@ -23,7 +25,7 @@ function handleDataSetChange({ record, name, value, oldValue }) {
     '[oldValue]',
     oldValue,
     `[record.get('${name}')]`,
-    record.get(name),
+    record.toData(),
   );
 }
 
@@ -39,6 +41,7 @@ class App extends React.Component {
     autoCreate: true,
     fields: [
       { name: 'sex', type: 'string', lookupCode: 'WEAR',label:'衣服分类' },
+      { name: 'wear', type: 'string', lookupCode: 'WEAR',label:'衣服分类1' },
     ],
     events: { 
       update: handleDataSetChange,
@@ -48,7 +51,10 @@ class App extends React.Component {
 
   render() {
     return (
-      <Screening name='sex' dataSet={this.ds} /> 
+      <Screening dataSet={this.ds} >
+        <ScreeningItem name='sex' />
+        <ScreeningItem name='wear' />
+      </Screening>
     );
   }
 }

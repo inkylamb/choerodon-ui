@@ -1,12 +1,11 @@
-import React, { Component, CSSProperties, Key } from 'react';
+import React, { Component, Key } from 'react';
 import classNames from 'classnames';
 import Col from 'choerodon-ui/lib/col';
 import noop from 'lodash/noop';
-import { observer } from 'mobx-react';
-import { action, observable, runInAction, toJS } from 'mobx';
 import ObserverCheckBox from '../check-box/CheckBox';
 import { ElementProps } from '../core/ViewComponent';
 import Record from '../data-set/Record';
+
 
 export interface Info {
     key: string | number | undefined;
@@ -49,7 +48,6 @@ export interface ScreeningOptionProps extends ElementProps {
     xxl?: number | ColSize;
 }
 
-@observer
 export default class ScreeningOption extends Component<ScreeningOptionProps> {
     
   static displayName: 'ScreeningOption';
@@ -62,14 +60,6 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     isSelected: false,
   };
 
-  @observable isSelected
-
-  constructor(props, context) {
-    super(props, context);
-    runInAction(() => {
-      this.isSelected = this.props.isSelected ;
-    })
-  }
 
   onMouseLeave = () => {
     const { optionKey,value, onMouseLeave } = this.props;
@@ -93,9 +83,8 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     }
   };
 
-  @action
   onClick = () =>  {
-    const { optionKey, multiple, onClick, onSelect, onDeselect, value } = this.props;
+    const { optionKey, multiple, onClick, onSelect, onDeselect, value, isSelected} = this.props;
     const info : Info = {
       key:optionKey,
       value,
@@ -104,12 +93,11 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     if(onSelect && onClick) {
         onClick(info);
         if (multiple ) {
-          if (this.isSelected && onDeselect ) {
+          if (isSelected && onDeselect ) {
             onDeselect(info);
           } else {
             onSelect(info);
           }
-          this.isSelected = !this.isSelected;
         } else {
           onSelect(info);
         }
@@ -126,6 +114,7 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
         style,
         multiple,
         onMouseDown,
+        isSelected,
         span,
         order,
         offset,
@@ -139,7 +128,6 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
         xxl,
     } = this.props;
     const ScreeningOptionPrefix = `${prefixCls}-screening-option`
-    const isSelected = this.isSelected
     const className = classNames(
         ScreeningOptionPrefix,
         {
@@ -176,7 +164,7 @@ export default class ScreeningOption extends Component<ScreeningOptionProps> {
     }
 
     
-    const checkbox = multiple ? <ObserverCheckBox readOnly checked={toJS(isSelected)} tabIndex={-1} /> : null;
+    const checkbox = multiple ? <ObserverCheckBox readOnly checked={isSelected} tabIndex={-1} /> : null;
 
     return (
         <Col
