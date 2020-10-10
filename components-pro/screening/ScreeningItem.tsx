@@ -1,6 +1,5 @@
 import React, { isValidElement, Key, ReactNode } from 'react';
 import { observer } from 'mobx-react';
-import Row from 'choerodon-ui/lib/row';
 import Icon from 'choerodon-ui/lib/icon';
 import warning from 'choerodon-ui/lib/_util/warning';
 import { observable, isArrayLike, runInAction, action, computed, toJS } from 'mobx';
@@ -10,9 +9,12 @@ import { isMoment, Moment } from 'moment';
 import defaultTo from 'lodash/defaultTo';
 import isString from 'lodash/isString';
 import { isNil, noop, omit } from 'lodash';
+import { ColProps } from 'choerodon-ui/lib/col';
+import Row, { RowProps } from 'choerodon-ui/lib/row';
+import classNames from 'classnames';
 import * as ObjectChainValue from '../_util/ObjectChainValue';
 import DataSetComponent, { DataSetComponentProps } from '../data-set/DataSetComponent';
-import ScreeningOption from './ScreeningOption';
+import ScreeningOption, { ScreeningOptionProps } from './ScreeningOption';
 import DataSet from '../data-set/DataSet';
 import Field from '../data-set/Field';
 import Record from '../data-set/Record';
@@ -26,28 +28,22 @@ import Validator, { CustomValidator } from '../validator/Validator';
 import isSame from '../_util/isSame';
 import isSameLike from '../_util/isSameLike';
 import ObserverButton from '../button/Button';
-import { FuncType } from '../button/enum';
 
 const disabledField = '__disabled';
 
-function defaultOnOption({ record }) {
-  return {
-    disabled: record.get(disabledField),
-  };
-}
 
 const expandedButton = (iconExpanded) => {
   if (iconExpanded === true) {
     return (
       <>
-        <span>更多</span>
+        <span>收起</span>
         <Icon type="expand_less" />
       </>
     )
   }
   return (
     <>
-      <span>收起</span>
+      <span>更多</span>
       <Icon type="expand_more" />
     </>
   )
@@ -76,18 +72,16 @@ export type RenderProps = {
 
 export type Renderer = (props: RenderProps) => ReactNode;
 
-export interface comfirmProps {
-  value: string,
+export interface Confirm {
+  value: string;
+  fieldName: string | undefined;
 }
 
 
 export interface ScreeningItemProps extends DataSetComponentProps {
-  field?: Field,
-  textField?: string;
-  valueField?: string;
   multiple?: boolean;
   dataSet?: DataSet;
-  name?: string;
+  name: string;
   pristine?: boolean;
   primitiveValue?: boolean;
   validator?: CustomValidator;
@@ -95,14 +89,16 @@ export interface ScreeningItemProps extends DataSetComponentProps {
   onChange?: (value, oldValue, formNode) => void;
   noValidate?: boolean;
   renderer?: Renderer;
-  onComfirm?: (comfirmProps) => void;
+  onConfirm?: (confirm: Confirm) => void;
   onRef?: (ref) => void;
+  colProps?: ColProps;
+  rowProps?: RowProps;
 }
 
 @observer
 export default class Screening extends DataSetComponent<ScreeningItemProps> {
 
-  static displayName = 'Screening';
+  static displayName = 'ScreeningItem';
 
   @observable iconExpanded: boolean;
 
@@ -119,6 +115,12 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
     runInAction(() => {
       this.iconExpanded = false;
       this.screeningMultiple = false;
+      if (this.name && this.dataSet && this.record) {
+        const value = this.record.get(this.name)
+        if (!isNil(value)) {
+          this.value = value;
+        }
+      }
     });
   }
 
@@ -163,11 +165,32 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
     return !this.isDisabled() && !this.isReadOnly();
   }
 
+  /**
+   * 判断是否展示更多按钮
+   */
+  @computed
+  get needExpandButton(): boolean  {
+    const {colProps} = this.props;
+    if(colProps){
+      const {span} = colProps
+      if(isNumber(span) && span >= 1){
+        const colNumber = 24 / span;
+        if(this.options && (this.options.length < colNumber)){
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
 
   static defaultProps = {
-    suffixCls: 'screening',
+    suffixCls: 'screening-item',
     noValidate: true,
     multiple: false,
+    colProps: {
+      span: 4,
+    },
   };
 
   @computed
@@ -322,7 +345,10 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
   }
 
   getValue(): any {
-    const { name } = this;
+    const { name, multiple } = this;
+    if (multiple) {
+      return this.value;
+    }
     if (this.dataSet && name) {
       return this.getDataSetValue();
     }
@@ -393,7 +419,7 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
 
   @action
   setValue(value: any): void {
-    const { onComfirm } = this.props;
+    const { onConfirm } = this.props;
     if (!this.isReadOnly()) {
       if (
         this.multiple
@@ -410,7 +436,7 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
       const { onChange = noop } = this.props;
       const { formNode } = this.context;
       const old = this.getOldValue();
-      if (dataSet && name) {
+      if (dataSet && name && !this.multiple) {
         (this.record || dataSet.create({}, dataIndex)).set(name, value);
       } else {
         value = formatString(value, {
@@ -426,10 +452,9 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
             return this.processValue(item)
           })
         } else if (value) {
-          const text = this.processValue(value)
-          this.text = text
-          if (onComfirm) {
-            onComfirm({
+          this.text = this.processValue(value)
+          if (onConfirm) {
+            onConfirm({
               value,
               fieldName: this.name,
             })
@@ -440,13 +465,20 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
     }
   }
 
+  /**
+   * 提交值，触发dataSet修改和提交方法。
+   */
   handleConfirm = () => {
-    const { onComfirm } = this.props;
-    if (onComfirm) {
-      onComfirm({
-        value: this.value,
-        fieldName: this.name,
-      })
+    const { onConfirm } = this.props;
+    const { value, dataSet, name, observableProps: { dataIndex } } = this
+    if (value && name && dataSet) {
+      (this.record || dataSet.create({}, dataIndex)).set(name, value);
+      if (onConfirm) {
+        onConfirm({
+          value: this.value,
+          fieldName: this.name,
+        })
+      }
     }
   }
 
@@ -574,11 +606,12 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
 
 
   getScreeningOption = () => {
-    const { multiple } = this;
+    const { colProps } = this.props;
     const {
       options,
       textField,
       valueField,
+      multiple,
     } = this;
     if (!options) {
       return null;
@@ -600,20 +633,22 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
         } else if (valueRecord === selectedValue) {
           isSelected = true;
         }
+        const textNode = (<span className={`${this.prefixCls}-option-text`}>{text}</span>)
+        const screeningOptionProps = {
+          ...colProps,
+          onSelect: this.handleSelect,
+          onDeselect: this.handleDeselect,
+          onClick: this.handleClick,
+          value: record,
+          optionkey: key,
+          multiple,
+          isSelected,
+          prefixCls: this.prefixCls,
+          children: textNode,
+        } as ScreeningOptionProps
+
         return (
-          <ScreeningOption
-            onSelect={this.handleSelect}
-            onDeselect={this.handleDeselect}
-            onClick={this.handleClick}
-            value={record}
-            span={4}
-            key={key}
-            optionKey={key}
-            multiple={multiple}
-            isSelected={isSelected}
-          >
-            {text}
-          </ScreeningOption>
+          <ScreeningOption key={key} {...screeningOptionProps} />
         )
       })
     }
@@ -643,6 +678,9 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
       'pristine',
       'primitiveValue',
       'trim',
+      'onRef',
+      'onConfirm',
+      'colProps',
     ]);
     otherProps.onChange = !this.isDisabled() ? this.handleChange : noop;
     return otherProps;
@@ -664,15 +702,34 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
     this.text = this.emptyValue;
   }
 
+  handleCancel = () => {
+    this.handleClear()
+    this.handleMultiple()
+  }
+
+
 
   render() {
-    const { iconExpanded, prefixCls } = this;
+    const { iconExpanded, prefixCls, multiple } = this;
     const label = this.getLabel();
-    const multipleButton = (<ObserverButton className={`${prefixCls}-multiple`} onClick={this.handleMultiple} funcType={FuncType.flat} icon="add">多选</ObserverButton>)
-    const expandButtonContainer = (<div className={`${prefixCls}-expand`} onClick={this.handleExpanedClick}>{expandedButton(iconExpanded)}</div>)
+    const multipleButton = (
+      <div className={`${prefixCls}-multiple`} onClick={this.handleMultiple} >
+        <Icon type="add" />
+        <span>多选</span>
+      </div>
+    )
+    const expandButtonContainer = this.needExpandButton && (<div className={`${prefixCls}-expanded`} onClick={this.handleExpanedClick}>{expandedButton(iconExpanded)}</div>)
+    const labelNode = (<span className={`${prefixCls}-label`}>{`${label}:`}</span>)
+    const allClassName = classNames(
+      {
+        [`${prefixCls}-multiple`]: multiple,
+        [`${prefixCls}-more`]: iconExpanded,
+      },
+      this.getMergedClassNames(),
+    )
     return (
-      <div {...this.getMergedProps()}>
-        <div className={`${prefixCls}-title`}>{label}</div>
+      <div {...this.getMergedProps()} className={allClassName}>
+        <div className={`${prefixCls}-title`}>{labelNode}</div>
         <div className={`${prefixCls}-content`}>
           <div className={`${prefixCls}-scroll`}>
             <Row>
@@ -680,14 +737,18 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
             </Row>
           </div>
         </div>
-        <div className={`${prefixCls}-operation`} >
-          {expandButtonContainer}
-          {multipleButton}
-        </div>
-        <div className={`${prefixCls}-footer`}>
-          <ObserverButton onClick={this.handleConfirm}>确认</ObserverButton>
-          <ObserverButton onClick={this.handleClear}>取消</ObserverButton>
-        </div>
+        {!this.multiple && (
+          <div className={`${prefixCls}-operation`} >
+            {expandButtonContainer}
+            {multipleButton}
+          </div>
+        )}
+        {this.multiple && (
+          <div className={`${prefixCls}-footer`}>
+            <ObserverButton onClick={this.handleConfirm}>确认</ObserverButton>
+            <ObserverButton onClick={this.handleCancel}>取消</ObserverButton>
+          </div>
+        )}
       </div>
     );
   }

@@ -24,6 +24,9 @@ export default class DataSetComponent<T extends DataSetComponentProps> extends V
     return this.observableProps.dataSet;
   }
 
+  /**
+   * can get the language from dataSet
+   */
   @computed
   get lang(): Lang {
     const { dataSet } = this;

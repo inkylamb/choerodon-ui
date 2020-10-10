@@ -295,11 +295,18 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
 
   @observable observableProps: any;
 
+  /**
+   * 获取组件的类名
+   * get component className
+   */
   get prefixCls(): string {
     const { suffixCls, prefixCls } = this.props;
     return getProPrefixCls(suffixCls!, prefixCls);
   }
 
+  /**
+   * get the local language
+   */
   get lang(): Lang {
     const { lang } = this.props;
     if (lang) {
@@ -313,10 +320,18 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     this.setObservableProps(props, context);
   }
 
+  /**
+   * all this components className 
+   * @param props 
+   */
   getMergedClassNames(...props) {
     return classNames(this.getClassName(), this.getWrapperClassNames(), ...props);
   }
 
+  /**
+   * get all props 
+   * @param props 
+   */
   getMergedProps(props = {}) {
     return {
       ...merge(this.getWrapperProps(props), this.getOtherProps()),
@@ -333,6 +348,11 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     this.observableProps = this.getObservableProps(props, context);
   }
 
+  /**
+   * make obverseable props
+   * @param props 
+   * @param context 
+   */
   @action
   updateObservableProps(props, context: any) {
     Object.assign(
@@ -342,6 +362,9 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     );
   }
 
+  /**
+   * when you want to get props by disabled changed and without style nor height property
+   */
   getOtherProps() {
     const { tabIndex, lang, style = {} } = this.props;
     let otherProps: any = omit(this.props, [
@@ -388,6 +411,10 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     return otherProps;
   }
 
+  /**
+   * merge the elemnt className with elementClassName property
+   * @param props 
+   */
   getClassName(...props): string | undefined {
     const {
       prefixCls,
@@ -396,6 +423,10 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     return classNames(prefixCls, elementClassName, ...props);
   }
 
+  /**
+   * get the wapper component props
+   * @param props 
+   */
   getWrapperProps(props = {}): any {
     const { style, hidden } = this.props;
     const wrapperProps: any = {
@@ -410,6 +441,10 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     return wrapperProps;
   }
 
+  /**
+   *  merge the component property className and sm lg disabled focus 
+   * @param args other classNames 
+   */
   getWrapperClassNames(...args): string {
     const {
       prefixCls,
@@ -486,6 +521,10 @@ export default class ViewComponent<P extends ViewComponentProps> extends Compone
     this.element = node;
   }
 
+   /**
+    * ref
+    * @param node 
+    */
   @autobind
   @action
   wrapperReference(node) {
