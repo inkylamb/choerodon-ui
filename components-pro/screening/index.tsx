@@ -8,6 +8,7 @@ import DataSetComponent, { DataSetComponentProps } from '../data-set/DataSetComp
 import ScreeningItem, { ScreeningItemProps } from './ScreeningItem';
 import DataSet from '../data-set';
 import Record from '../data-set/Record';
+import isArray from 'lodash/isArray';
 
 
 export interface ScreeningProps extends DataSetComponentProps {
@@ -30,10 +31,10 @@ export default class Screening extends DataSetComponent<ScreeningProps> {
 
   constructor(props, context) {
     super(props, context);
-    const { dataSet } = props
+    const dataSet  = this.dataSet
     runInAction(() => {
       if (dataSet) {
-        this.mergeValue = toJS(dataSet.current.toData())
+        this.mergeValue = dataSet.current.toData()
       }
     });
   }
@@ -79,12 +80,12 @@ export default class Screening extends DataSetComponent<ScreeningProps> {
   }
 
   @action
-  handComfirm = ({ value, text, field }) => {
-    const fieldName = field.get('name')
+  handComfirm = ({ value ,fieldName}) => {
+    console.log(fieldName,value)
     if (fieldName) {
       this.mergeValue = {
         ...this.mergeValue, [fieldName]: {
-          value, text, field,
+          value,
         },
       }
     }
@@ -92,11 +93,11 @@ export default class Screening extends DataSetComponent<ScreeningProps> {
 
   @action
   handleCloseItem = (x) => {
-    const { dataSet } = this;
+    const { dataSet } = this.props;
     if (dataSet && x) {
       (this.record || dataSet.create({})).set(x, this.emptyValue);
     }
-    delete this.mergeValue[x];
+    this.mergeValue[x].value = this.emptyValue;
     if (this.child && this.child[x]) {
       this.child[x].handleClear()
     }
@@ -106,41 +107,52 @@ export default class Screening extends DataSetComponent<ScreeningProps> {
 
   renderTag = (mergeValue) => {
     const tagChildren: ReactElement[] = [];
-    const { dataSet } = this.props;
-    Object.keys(mergeValue).forEach(key => {
-      const text = mergeValue[key].text
-      const field = dataSet.getField(key)
-      let label = key
-      if (field) {
-        label = field.get('label')
-      }
-      if (text && label) {
-        tagChildren.push(
-          <Tag
-            onClose={(e) => {
-              e.preventDefault();
-              this.handleCloseItem(key)
-            }}
-            key={key}
-            closable
-          >
-            {`${label}:${text}`}
-          </Tag>,
-        )
-      }
-    })
-    return (
-      <div>
-        {tagChildren}
-      </div>
-    )
+    const { dataSet } = this;
+    if(dataSet){
+      Object.keys(mergeValue).forEach(key => {
+        const value = mergeValue[key].value;
+        const field = dataSet.getField(key);
+        let label = key
+        let text = value
+        console.log(1111111);
+        if (field) {
+          label = field.get('label')
+          if(isArray(value)){
+           text = value.map(v => field.getText(v))
+          }else{
+            text = field.getText(value)
+          }
+        }
+        if (text && label) {
+          tagChildren.push(
+            <Tag
+              onClose={(e) => {
+                e.preventDefault();
+                this.handleCloseItem(key)
+              }}
+              key={key}
+              closable
+            >
+              {`${label}:${text}`}
+            </Tag>,
+          )
+        }
+      })
+      return (
+        <div>
+          {tagChildren}
+        </div>
+      )
+    }
+    return null
   }
 
 
 
 
   render() {
-    const { dataSet, children } = this.props;
+    const dataSet = this.dataSet;
+    const { children } = this.props;
     const mergeValue = toJS(this.mergeValue)
     delete mergeValue.__dirty
     const filteredChildren = Children.toArray(children).filter(c => !!c);

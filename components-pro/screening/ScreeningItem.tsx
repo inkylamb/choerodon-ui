@@ -19,14 +19,14 @@ import Record from '../data-set/Record';
 import normalizeOptions from '../option/normalizeOptions';
 import autobind from '../_util/autobind';
 import isEmpty from '../_util/isEmpty';
-import { getDateFormatByField, toMultipleValue, toRangeValue } from '../field/utils';
+import { getDateFormatByField, toMultipleValue } from '../field/utils';
 import { FieldType } from '../data-set/enum';
 import { formatString } from '../formatter';
-import Validator, { CustomValidator, ValidationMessages } from '../validator/Validator';
+import Validator, { CustomValidator } from '../validator/Validator';
 import isSame from '../_util/isSame';
 import isSameLike from '../_util/isSameLike';
 import ObserverButton from '../button/Button';
-import { ButtonColor, ButtonType, ButtonWaitType, FuncType } from '../button/enum';
+import { FuncType } from '../button/enum';
 
 const disabledField = '__disabled';
 
@@ -78,8 +78,6 @@ export type Renderer = (props: RenderProps) => ReactNode;
 
 export interface comfirmProps {
   value: string,
-  text: string,
-  field: Field,
 }
 
 
@@ -430,11 +428,12 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
         } else if (value) {
           const text = this.processValue(value)
           this.text = text
-          onComfirm({
-            text,
-            value,
-            field: this.field,
-          })
+          if (onComfirm) {
+            onComfirm({
+              value,
+              fieldName: this.name,
+            })
+          }
         }
       }
       this.value = value;
@@ -443,11 +442,12 @@ export default class Screening extends DataSetComponent<ScreeningItemProps> {
 
   handleConfirm = () => {
     const { onComfirm } = this.props;
-    onComfirm({
-      text: this.text,
-      value: this.value,
-      field: this.field,
-    })
+    if (onComfirm) {
+      onComfirm({
+        value: this.value,
+        fieldName: this.name,
+      })
+    }
   }
 
   @action

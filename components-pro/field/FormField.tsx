@@ -354,7 +354,6 @@ export class FormField<T extends FormFieldProps> extends DataSetComponent<T> {
 
   @computed
   get name(): string | undefined {
-    console.log(this.observableProps)
     return this.observableProps.name;
   }
 

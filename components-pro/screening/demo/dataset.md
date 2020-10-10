@@ -35,10 +35,13 @@ function handQueryDataSet({ dataSet, params, data }){
 }
 
 
+
+
 class App extends React.Component {
 
   ds = new DataSet({
     autoCreate: true,
+    data:[{sex: "kidsOverSize"}],
     fields: [
       { name: 'sex', type: 'string', lookupCode: 'WEAR',label:'衣服分类' },
       { name: 'wear', type: 'string', lookupCode: 'WEAR',label:'衣服分类1' },
