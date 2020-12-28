@@ -3,11 +3,10 @@ import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 import defer from 'lodash/defer';
 import noop from 'lodash/noop';
-import assign from 'lodash/assign';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import classes from 'component-classes';
-import { pxToRem, pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
+import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 import { getConfig } from 'choerodon-ui/lib/configure';
 import ViewComponent, { ViewComponentProps } from '../core/ViewComponent';
@@ -128,8 +127,6 @@ export default class Modal extends ViewComponent<ModalProps> {
 
   cancelButton: Button | null;
 
-  centerStyle?:CSSProperties;
-
   contentNode: HTMLElement;
 
   saveCancelRef = node => (this.cancelButton = node);
@@ -188,7 +185,13 @@ export default class Modal extends ViewComponent<ModalProps> {
   getClassName(): string | undefined {
     const {
       prefixCls,
-      props: { style = {}, fullScreen, drawer, border = getConfig('modalSectionBorder') },
+      props: { 
+        style = {}, 
+        fullScreen, 
+        drawer, 
+        border = getConfig('modalSectionBorder'),
+        autoCenter = getConfig('modalAutoCenter'),
+       },
     } = this;
 
     return super.getClassName({
@@ -196,28 +199,18 @@ export default class Modal extends ViewComponent<ModalProps> {
       [`${prefixCls}-fullscreen`]: fullScreen,
       [`${prefixCls}-drawer`]: drawer,
       [`${prefixCls}-border`]: border,
+      [`${prefixCls}-auto-center`]: autoCenter,
     });
   }
 
   render() {
     const { prefixCls } = this;
-    const { element, props:{ autoCenter = getConfig('modalAutoCenter') } } = this;
-    this.centerStyle = {
-      display: 'flex',
-      height:'100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }
-    
-    if(element && this.centerStyle && autoCenter ){
-      Object.assign(element.style, this.centerStyle);
-    }
     const header = this.getHeader();
     const body = this.getBody();
     const footer = this.getFooter();
     return (
-      <div {...this.getMergedProps()} style={this.centerStyle}>
-        <div ref={this.contentReference} style={{height:'min-content',width:'5.2rem'}} className={`${prefixCls}-content`}>
+      <div {...this.getMergedProps()}>
+        <div ref={this.contentReference}  className={`${prefixCls}-content`}>
           {header}
           {body}
           {footer}
@@ -244,35 +237,27 @@ export default class Modal extends ViewComponent<ModalProps> {
       const { prefixCls } = this;
       const { clientX, clientY } = downEvent;
       const { offsetLeft, offsetTop } = element;
-      const heightW = window.screen.height;
+      const heightW = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+      let autoMove = 0;
       this.moveEvent
         .addEventListener('mousemove', (moveEvent: MouseEvent) => {
           const { clientX: moveX, clientY: moveY } = moveEvent;
           classes(element).remove(`${prefixCls}-center`);
           const left = pxToRem(Math.max(offsetLeft + moveX - clientX, 0));
-          const top = pxToRem(Math.max(offsetTop + moveY - clientY, 0));
+          const top = pxToRem(Math.max(offsetTop + autoMove + moveY - clientY, 0));
           this.offset = [left, top];
-          if( this.centerStyle && autoCenter ) {
-            console.log(((heightW - contentNode.clientHeight)/2))
-            const mergeStyle = assign({},this.getMergedProps().style,{
+          if( autoCenter && classes(element).has(`${prefixCls}-auto-center`)) {
+            classes(element).remove(`${prefixCls}-auto-center`);
+            autoMove = Math.max((heightW - contentNode.clientHeight)/2,0)
+            Object.assign(element.style, {
               left, 
-              top:pxToRem((heightW - contentNode.clientHeight)/2),
-              display: 'inherit',
-              alignItems: 'unset',
-              justifyContent: 'unset',
+              top:pxToRem(autoMove),
             });
-            console.log(mergeStyle);
-            // element.style = {}; // 先把样式制空再赋值可以避免出现快速滑动的情况
-            Object.assign(element.style, mergeStyle);
           } else {
-            console.log(this.centerStyle?.height);
-            const topMESS = this.centerStyle?.height || top
-            console.log(left,top);
             Object.assign(element.style, {
               left,
-              top:topMESS,
+              top,
             });
-            this.centerStyle = undefined;
           }
         })
         .addEventListener('mouseup', () => {
