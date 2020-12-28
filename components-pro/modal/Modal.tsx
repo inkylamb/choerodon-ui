@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import omit from 'lodash/omit';
 import defer from 'lodash/defer';
 import noop from 'lodash/noop';
+import assign from 'lodash/assign';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import classes from 'component-classes';
-import { pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
+import { pxToRem, pxToRem } from 'choerodon-ui/lib/_util/UnitConvertor';
 import KeyCode from 'choerodon-ui/lib/_util/KeyCode';
 import { getConfig } from 'choerodon-ui/lib/configure';
 import ViewComponent, { ViewComponentProps } from '../core/ViewComponent';
@@ -31,6 +32,7 @@ export interface ModalProps extends ViewComponentProps {
   fullScreen?: boolean;
   maskClosable?: boolean;
   maskStyle?: CSSProperties;
+  autoCenter?: boolean;
   mask?: boolean,
   maskClassName?: string,
   keyboardClosable?: boolean;
@@ -72,6 +74,7 @@ export default class Modal extends ViewComponent<ModalProps> {
     okText: PropTypes.node,
     cancelText: PropTypes.node,
     okProps: PropTypes.object,
+    autoCenter: PropTypes.bool,
     cancelProps: PropTypes.object,
     onClose: PropTypes.func,
     onOk: PropTypes.func,
@@ -125,6 +128,10 @@ export default class Modal extends ViewComponent<ModalProps> {
 
   cancelButton: Button | null;
 
+  centerStyle?:CSSProperties;
+
+  contentNode: HTMLElement;
+
   saveCancelRef = node => (this.cancelButton = node);
 
   handleKeyDown = e => {
@@ -162,6 +169,7 @@ export default class Modal extends ViewComponent<ModalProps> {
       'border',
       'okFirst',
       'drawerTransitionName',
+      'autoCenter',
     ]);
     if (this.props.keyboardClosable) {
       otherProps.autoFocus = true;
@@ -170,6 +178,11 @@ export default class Modal extends ViewComponent<ModalProps> {
     }
 
     return otherProps;
+  }
+
+  @autobind
+  contentReference(node) {
+    this.contentNode = node;
   }
 
   getClassName(): string | undefined {
@@ -188,12 +201,23 @@ export default class Modal extends ViewComponent<ModalProps> {
 
   render() {
     const { prefixCls } = this;
+    const { element, props:{ autoCenter = getConfig('modalAutoCenter') } } = this;
+    this.centerStyle = {
+      display: 'flex',
+      height:'100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }
+    
+    if(element && this.centerStyle && autoCenter ){
+      Object.assign(element.style, this.centerStyle);
+    }
     const header = this.getHeader();
     const body = this.getBody();
     const footer = this.getFooter();
     return (
-      <div {...this.getMergedProps()}>
-        <div className={`${prefixCls}-content`}>
+      <div {...this.getMergedProps()} style={this.centerStyle}>
+        <div ref={this.contentReference} style={{height:'min-content',width:'5.2rem'}} className={`${prefixCls}-content`}>
           {header}
           {body}
           {footer}
@@ -213,13 +237,14 @@ export default class Modal extends ViewComponent<ModalProps> {
     this.okCancelEvent.clear();
   }
 
-  @autobind
-  handleHeaderMouseDown(downEvent: MouseEvent) {
-    const { element } = this;
-    if (element) {
+
+  handleHeaderMouseDown = (downEvent: MouseEvent) => {
+    const { element, contentNode, props:{ autoCenter = getConfig('modalAutoCenter') } } = this;
+    if (element && contentNode) {
       const { prefixCls } = this;
       const { clientX, clientY } = downEvent;
       const { offsetLeft, offsetTop } = element;
+      const heightW = window.screen.height;
       this.moveEvent
         .addEventListener('mousemove', (moveEvent: MouseEvent) => {
           const { clientX: moveX, clientY: moveY } = moveEvent;
@@ -227,10 +252,28 @@ export default class Modal extends ViewComponent<ModalProps> {
           const left = pxToRem(Math.max(offsetLeft + moveX - clientX, 0));
           const top = pxToRem(Math.max(offsetTop + moveY - clientY, 0));
           this.offset = [left, top];
-          Object.assign(element.style, {
-            left,
-            top,
-          });
+          if( this.centerStyle && autoCenter ) {
+            console.log(((heightW - contentNode.clientHeight)/2))
+            const mergeStyle = assign({},this.getMergedProps().style,{
+              left, 
+              top:pxToRem((heightW - contentNode.clientHeight)/2),
+              display: 'inherit',
+              alignItems: 'unset',
+              justifyContent: 'unset',
+            });
+            console.log(mergeStyle);
+            // element.style = {}; // 先把样式制空再赋值可以避免出现快速滑动的情况
+            Object.assign(element.style, mergeStyle);
+          } else {
+            console.log(this.centerStyle?.height);
+            const topMESS = this.centerStyle?.height || top
+            console.log(left,top);
+            Object.assign(element.style, {
+              left,
+              top:topMESS,
+            });
+            this.centerStyle = undefined;
+          }
         })
         .addEventListener('mouseup', () => {
           this.moveEvent.clear();

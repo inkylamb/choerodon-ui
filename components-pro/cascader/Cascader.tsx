@@ -180,9 +180,6 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
      */
     notFoundContent: PropTypes.node,
     /**
-     * 设置选项属性，如 disabled;
-     */
-      /**
      * 选择一个值的时候触发
      */
     onChoose: PropTypes.func,
@@ -190,6 +187,9 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
      * 取消选中一个值的时候触发多选时候生效
      */
     onUnChoose: PropTypes.func,
+    /**
+     * 设置选项属性，如 disabled;
+     */
     onOption: PropTypes.func,
     singleMenuStyle: PropTypes.object,
     singleMenuItemStyle: PropTypes.object,

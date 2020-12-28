@@ -14,7 +14,7 @@ title:
 DataSet Binding
 
 ````jsx
-import { DataSet, SelectBox, Row, Col, Form } from 'choerodon-ui/pro';
+import { DataSet, SelectBox, Row, Col, Form,TextField } from 'choerodon-ui/pro';
 
 function handleDataSetChange({ record, name, value, oldValue }) {
   console.log('[dataset newValue]', value, '[oldValue]', oldValue, '[record.get(name)]', record.get(name));
@@ -45,8 +45,8 @@ class App extends React.Component {
   ds = new DataSet({
     data,
     fields: [
-      { name: 'first-name', type: 'string', label: '名', textField: 'text', valueField: 'value', options: this.optionDs },
-      { name: 'last-name', type: 'string', label: '姓', multiple: ',' },
+      { name: 'first-name', type: 'string', label: '名',validator:() => '111111', multiple:true },
+      { name: 'last-name', type: 'string', label: '姓', multiple: ',', validator:() => '111111' },
     ],
     events: {
       update: handleDataSetChange,
@@ -58,7 +58,7 @@ class App extends React.Component {
       <Form dataSet={this.ds}>
         <Row gutter={10}>
           <Col span={12}>
-            <SelectBox name="first-name" />
+            <TextField name="first-name" />
           </Col>
           <Col span={12}>
             <SelectBox name="last-name">

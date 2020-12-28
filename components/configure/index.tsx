@@ -109,6 +109,7 @@ export type Config = {
   tableAutoFocus?: boolean;
   pagination?: TablePaginationConfig | false;
   modalSectionBorder?: boolean;
+  modalAutoCenter?: boolean;
   modalOkFirst?: boolean;
   drawerOkFirst?: boolean | undefined;
   modalButtonProps?: ButtonProps;
@@ -208,6 +209,7 @@ const globalConfig: ObservableMap<ConfigKeys, Config[ConfigKeys]> = observable.m
   ['tableAutoFocus', false],
   ['modalSectionBorder', true],
   ['modalOkFirst', true],
+  ['modalAutoCenter', true],
   ['drawerOkFirst', undefined],
   ['buttonColor', ButtonColor.default],
   ['buttonFuncType', FuncType.raised],
