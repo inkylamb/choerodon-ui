@@ -1047,7 +1047,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
     };
     value = getSimpleValue(value, valueField);
     if (this.options instanceof DataSet) {
-      return findTreeItem(this.options.treeData, value, 0);
+      return findTreeItem(toJS(this.options.treeData), toJS(value), 0);
     }
     return findTreeItem(this.options, value, 0);
   }
@@ -1113,6 +1113,7 @@ export class Cascader<T extends CascaderProps> extends TriggerField<T> {
         this.setPopup(true);
         this.setActiveValue(targetOption.value);
         this.setIsClickTab(isClickTab);
+        this.choose(targetOption.value);
         if(onChoose){
           onChoose(
             this.processRecordToObject(targetOption.value),

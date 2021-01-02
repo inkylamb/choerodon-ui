@@ -63,6 +63,7 @@ class App extends React.Component {
     return (
       <Cascader
           multiple
+          expandTrigger="hover"
           dataSet={this.ds}
           name="id"
       />
