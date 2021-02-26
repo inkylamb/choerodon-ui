@@ -19,25 +19,28 @@
   .btn-default;
   // Make sure that the target of Button's click event always be `button`
 
-  > i.@{iconfont-css-prefix} {
+  >i.@{iconfont-css-prefix} {
     display: inline-block;
     line-height: inherit;
     vertical-align: top;
     pointer-events: none;
   }
-  > span {
+
+  >span {
     display: inline-block;
   }
-  > i.@{iconfont-css-prefix} + span,
-  > span + i.@{iconfont-css-prefix} {
+
+  >i.@{iconfont-css-prefix}+span,
+  >span+i.@{iconfont-css-prefix} {
     margin-left: 0.04rem;
   }
-  > div.btn-loading {
+
+  >div.btn-loading {
     display: inline-block;
     width: 0.32rem;
     margin-right: 0.04rem;
 
-    > span {
+    >span {
       display: inline-block;
       width: 0.07rem;
       height: 0.07rem;
@@ -45,28 +48,32 @@
       border-color: #000;
       border-radius: 50%;
     }
+
     .dot1 {
       transform: scale(1);
       opacity: 1;
       animation: btn-loading 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.07s infinite normal;
     }
+
     .dot2 {
       margin: 0 0.03rem;
       transform: scale(0.7);
       opacity: 0.9;
       animation: btn-loading 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.17s infinite normal;
     }
+
     .dot3 {
       transform: scale(0.7);
       opacity: 0.9;
       animation: btn-loading 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.27s infinite normal;
     }
   }
+
   .@{progress-cls}.@{progress-cls}-loading {
     margin-right: 0.01rem;
     line-height: 1;
 
-    & + span {
+    &+span {
       margin-left: 0.05rem;
     }
 
@@ -75,6 +82,7 @@
       height: 0.15rem;
     }
   }
+
   &-flat&-primary {
     .btn-flat-primary;
 
@@ -90,6 +98,7 @@
     .@{btn-prefix-cls}-group &:first-child {
       &:not(:last-child) {
         border-right-color: @btn-group-border;
+
         &[disabled] {
           border-right-color: @btn-default-border;
         }
@@ -97,8 +106,9 @@
     }
 
     .@{btn-prefix-cls}-group &:last-child:not(:first-child),
-    .@{btn-prefix-cls}-group & + & {
+    .@{btn-prefix-cls}-group &+& {
       border-left-color: @btn-group-border;
+
       &[disabled] {
         border-left-color: @btn-default-border;
       }
@@ -120,6 +130,7 @@
     .@{btn-prefix-cls}-group &:first-child {
       &:not(:last-child) {
         border-right-color: @btn-group-border;
+
         &[disabled] {
           border-right-color: @btn-default-border;
         }
@@ -127,13 +138,15 @@
     }
 
     .@{btn-prefix-cls}-group &:last-child:not(:first-child),
-    .@{btn-prefix-cls}-group & + & {
+    .@{btn-prefix-cls}-group &+& {
       border-left-color: @btn-group-border;
+
       &[disabled] {
         border-left-color: @btn-default-border;
       }
     }
   }
+
   &-ghost {
     .btn-ghost;
   }
@@ -150,7 +163,8 @@
   &-circle,
   &-circle-outline {
     .btn-circle(@btn-prefix-cls);
-    & > i.@{iconfont-css-prefix} {
+
+    &>i.@{iconfont-css-prefix} {
       margin: 0;
     }
   }
@@ -189,8 +203,8 @@
   }
 
   // http://stackoverflow.com/a/21281554/3040605
-  &:focus > span,
-  &:active > span {
+  &:focus>span,
+  &:active>span {
     position: relative;
   }
 
@@ -229,7 +243,7 @@
     letter-spacing: 0.34em;
   }
 
-  &-two-chinese-chars > * {
+  &-two-chinese-chars>* {
     margin-right: -0.34em;
     letter-spacing: 0.34em;
   }
@@ -273,9 +287,11 @@
 
 a.@{btn-prefix-cls} {
   line-height: @btn-height-base - 0.02rem;
+
   &-lg {
     line-height: @btn-height-lg - 0.02rem;
   }
+
   &-sm {
     line-height: @btn-height-sm - 0.02rem;
   }
@@ -286,14 +302,17 @@ a.@{btn-prefix-cls} {
     transform: scale(0.7);
     opacity: 0.9;
   }
+
   33.3% {
     transform: scale(1);
     opacity: 1;
   }
+
   66.6% {
     transform: scale(0.7);
     opacity: 0.9;
   }
+
   100% {
     transform: scale(0.7);
     opacity: 0.9;

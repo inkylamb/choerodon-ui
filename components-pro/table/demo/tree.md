@@ -118,6 +118,7 @@ class App extends React.Component {
       <Table
         mode={mode}
         buttons={this.buttons}
+        rowHeight={40}
         dataSet={this.ds}
         expandIconColumnIndex={expandIconColumnIndex}
         border={border}

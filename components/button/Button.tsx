@@ -167,16 +167,16 @@ export default class Button extends Component<ButtonProps, any> {
     iconNode = loading ? (
       <Progress key="loading" type={ProgressType.loading} size={Size.small} />
     ) : (
-      iconNode
-    );
+        iconNode
+      );
     const kids =
       children || children === 0
         ? Children.map(children, child => {
-            if (typeof child === 'string') {
-              return <span>{child}</span>;
-            }
-            return child;
-          })
+          if (typeof child === 'string') {
+            return <span>{child}</span>;
+          }
+          return child;
+        })
         : null;
 
     return (

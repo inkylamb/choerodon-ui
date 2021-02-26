@@ -20,7 +20,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      value: '#0000ff',
+      value: '#000',
     };
   }
 
@@ -32,12 +32,12 @@ class App extends React.Component {
   }
 
   render() {
-    return <ColorPicker value={this.state.value} onChange={this.handleChange} />;
+    return <ColorPicker defaultValue="#000000"  value={this.state.value} onChange={this.handleChange} />;
   }
 }
 
 ReactDOM.render(
   <App />,
-  mountNode
+  mountNode,
 );
 ````

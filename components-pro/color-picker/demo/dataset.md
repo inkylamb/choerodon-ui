@@ -24,7 +24,7 @@ class App extends React.Component {
   ds = new DataSet({
     autoCreate: true,
     fields: [
-      { name: 'color', type: 'color', defaultValue: '#00ff00', required: true },
+      { name: 'color', type: 'color', defaultValue: '#000000', required: true },
     ],
     events: {
       update: handleDataSetChange,
@@ -38,6 +38,6 @@ class App extends React.Component {
 
 ReactDOM.render(
   <App />,
-  mountNode
+  mountNode,
 );
 ````

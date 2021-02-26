@@ -4,6 +4,7 @@ import { Link } from 'bisheng/router';
 import { FormattedMessage } from 'react-intl';
 import classNames from 'classnames';
 import { Button, Col, Icon, Menu, Popover, Row, Select } from 'choerodon-ui';
+import { Button as ButtonPro } from 'choerodon-ui/pro';
 import * as utils from '../utils';
 import { version as c7nUIVersion } from '../../../../package.json';
 import logo from '../../static/images/logo-title.svg';
@@ -31,9 +32,9 @@ function getPathnameRegExp(pathname) {
 
 export default class Header extends React.Component {
   static contextTypes = {
-    router: PropTypes.object.isRequired,
-    intl: PropTypes.object.isRequired,
-    isMobile: PropTypes.bool.isRequired,
+    router: PropTypes.object.isRequiprimary,
+    intl: PropTypes.object.isRequiprimary,
+    isMobile: PropTypes.bool.isRequiprimary,
   };
 
   state = {
@@ -85,6 +86,70 @@ export default class Header extends React.Component {
     );
   };
 
+  handleButtonColorChange = (color) => {
+    const root = document.querySelector(':root');
+    let colorContent = ``;
+    switch (color) {
+      case 'green':
+        colorContent = `
+        --primary-1: #e6fff5;
+        --primary-2: #9bf2d4;
+        --primary-3: #6ee6c0;
+        --primary-4: #45d9af;
+        --primary-5: #21cca1;
+        --primary-6: #00bf96;
+        --primary-7: #00997d;
+        --primary-8: #007362;
+        --primary-9: #004d44;
+        --primary-10: #002623;`
+        break;
+      case 'red':
+        colorContent = `
+        --primary-1: #ffeae6;
+        --primary-2: #ffafa3;
+        --primary-3: #fc8679;
+        --primary-4: #f0584d;
+        --primary-5: #e32b24;
+        --primary-6: #d50000;
+        --primary-7: #b00006;
+        --primary-8: #8a0009;
+        --primary-9: #63000a;
+        --primary-10: #3d0008;
+        `;
+        break;
+      case 'purple':
+        colorContent = `
+        --primary-1: #ebdfed;
+        --primary-2: #ded3e0;
+        --primary-3: #ceb8d4;
+        --primary-4: #b98dc7;
+        --primary-5: #a466ba;
+        --primary-6: #8e44ad;
+        --primary-7: #692e87;
+        --primary-8: #481c61;
+        --primary-9: #290e3b;
+        --primary-10: #0e0514;
+        `;
+        break;
+      default:
+        colorContent = `
+        --primary-1: #e6ebf5;
+        --primary-2: #dadee8;
+        --primary-3: #b6bfdb;
+        --primary-4: #8a99cf;
+        --primary-5: #6374c2;
+        --primary-6: #3f51b5;
+        --primary-7: #2b378f;
+        --primary-8: #1a2169;
+        --primary-9: #0d1042;
+        --primary-10: #05061c;
+        `;
+    }
+
+    root.setAttribute('style', colorContent)
+
+  }
+
   render() {
     const { menuVisible } = this.state;
     const { isMobile } = this.context;
@@ -107,10 +172,12 @@ export default class Header extends React.Component {
       clearfix: true,
     });
 
+    const ButtonColor = () => {
+      return ['blue', 'green', 'red', 'purple'].map(item => <ButtonPro onClick={() => { this.handleButtonColorChange(item) }} key={item} color={item}>{item}</ButtonPro>)
+    }
+
     const menu = [
-      <Button ghost size="small" onClick={this.handleLangChange} className="header-lang-button" key="lang-button">
-        <FormattedMessage id="app.header.lang" />
-      </Button>,
+      <ButtonColor key="1212" />,
       <Select
         key="version"
         className="version"

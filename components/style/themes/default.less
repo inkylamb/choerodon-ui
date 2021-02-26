@@ -2,14 +2,33 @@
 /* stylelint-disable at-rule-empty-line-before,at-rule-name-space-after,at-rule-no-unknown */
 @import '@{iconfont}/style/theme';
 @import '../color/colors';
+@import './variables';
 
 // The prefix to use on all css classes from c7n.
 @c7n-prefix: c7n;
 @c7n-pro-prefix: c7n-pro;
 
+
+
+// Color used by default to control hover and active backgrounds and for
+// alert info backgrounds.
+// alert info backgrounds.
+@primary-1: var(--primary-1);
+@primary-2: var(--primary-2);
+@primary-3: var(--primary-3);
+@primary-4: var(--primary-4);
+@primary-5: var(--primary-5);
+@primary-6: var(--primary-6);
+@primary-7: var(--primary-7);
+@primary-8: var(--primary-8);
+@primary-9: var(--primary-9);
+@primary-10: var(--primary-10);
+
+@fade-primary-2: rgba(63, 81, 181, 0.2);
+
 // -------- Colors -----------
-@primary-color: @blue-6;
-@info-color: @blue-6;
+@primary-color: @primary-6;
+@info-color: @primary-6;
 @success-color: @green-6;
 @processing-color: @primary-color;
 @error-color: @red-6;
@@ -18,21 +37,6 @@
 @warning-color: @gold-6;
 @normal-color: #d9d9d9;
 @B500: #a6a6a6;
-
-// Color used by default to control hover and active backgrounds and for
-// alert info backgrounds.
-@primary-1: color(~`colorPalette('@{primary-color}', 1) `); // replace tint(@primary-color, 90%)
-@primary-2: color(~`colorPalette('@{primary-color}', 2) `); // replace tint(@primary-color, 80%)
-@primary-3: color(~`colorPalette('@{primary-color}', 3) `); // unused
-@primary-4: color(~`colorPalette('@{primary-color}', 4) `); // unused
-@primary-5: color(
-  ~`colorPalette('@{primary-color}', 5) `
-); // color used to control the text color in many active and hover states, replace tint(@primary-color, 20%)
-@primary-6: @primary-color; // color used to control the text color of active buttons, don't use, use @primary-color
-@primary-7: color(~`colorPalette('@{primary-color}', 7) `); // replace shade(@primary-color, 5%)
-@primary-8: color(~`colorPalette('@{primary-color}', 8) `); // unused
-@primary-9: color(~`colorPalette('@{primary-color}', 9) `); // unused
-@primary-10: color(~`colorPalette('@{primary-color}', 10) `); // unused
 
 // Base Scaffolding Variables
 // ---
@@ -46,19 +50,20 @@
   sans-serif;
 @font-family: 'Monospaced Number', @font-family-no-number;
 @code-family: Consolas, Menlo, Courier, monospace;
-@heading-color: fade(#000, 85%);
-@text-color: fade(#000, 100%);
-@text-color-secondary: fade(#000, 45%);
-@heading-color-dark: fade(#fff, 100%);
-@text-color-dark: fade(#fff, 85%);
-@text-color-secondary-dark: fade(#fff, 65%);
+@heading-color: rgba(0, 0, 0, 0.85);
+@text-color: #000000;
+@text-color-secondary: rgba(0, 0, 0, 0.45);
+@heading-color-dark: #ffffff;
+@text-color-dark: rgba(255, 255, 255, 0.85);
+@text-color-secondary-dark: rgba(255, 255, 255, 0.65);
 @font-size-base: 0.13rem;
-@font-size-lg: @font-size-base + 0.03rem;
-@font-size-sm: @font-size-base - 0.01rem;
+@font-size-lg: 0.16rem;
+@font-size-sm: 0.12rem;
 @line-height-base: 1.5;
 @border-radius-lg: 0.1rem;
 @border-radius-base: 0.02rem;
 @border-radius-sm: 0.02rem;
+
 
 // paddings
 @padding-lg: 0.24rem; // containers
@@ -97,8 +102,8 @@
 
 // LINK
 @link-color: @primary-color;
-@link-hover-color: color(~`colorPalette('@{link-color}', 5) `);
-@link-active-color: color(~`colorPalette('@{link-color}', 7) `);
+@link-hover-color: @primary-5;
+@link-active-color: @primary-7;
 @link-decoration: none;
 @link-hover-decoration: none;
 
@@ -127,13 +132,13 @@
 @outline-width: 0.02rem;
 @outline-color: @primary-color;
 
-@background-color-light: fade(#000, 4%); // background of header and selected item
-@background-color-base: hsv(0, 0, 96%); // Default grey background color
+@background-color-light: rgba(0, 0, 0, 0.04); // background of header and selected item
+@background-color-base: #f5f5f5; // Default grey background color
 
 // Disabled states
-@disabled-color: fade(#000, 25%);
+@disabled-color: rgba(0, 0, 0, 0.25);
 @disabled-bg: @background-color-base;
-@disabled-color-dark: fade(#fff, 35%);
+@disabled-color-dark: rgba(255, 255, 255, 0.35);
 
 // Shadow
 @shadow-color: rgba(0, 0, 0, 0.12);
@@ -195,7 +200,7 @@
 // Checkbox
 @checkbox-size: 0.16rem;
 @checkbox-color: @primary-color;
-@checkbox-border-color: fade(#000, 65%);
+@checkbox-border-color: rgba(0, 0, 0, 0.65);
 @checkbox-border-width: 0.02rem;
 
 // Radio
@@ -238,11 +243,11 @@
 @screen-xxl-min: @screen-xxl;
 
 // provide a maximum
-@screen-xs-max: (@screen-sm-min - 1px);
-@screen-sm-max: (@screen-md-min - 1px);
-@screen-md-max: (@screen-lg-min - 1px);
-@screen-lg-max: (@screen-xl-min - 1px);
-@screen-xl-max: (@screen-xxl-min - 1px);
+@screen-xs-max: 479px;
+@screen-sm-max: 575px;
+@screen-md-max: 991px;
+@screen-lg-max: 1199px;
+@screen-xl-max: 1599px;
 
 // Grid system
 @grid-columns: 24;
@@ -307,7 +312,7 @@
 @input-padding-vertical-base: @padding-vertical-base;
 @input-padding-vertical-sm: @padding-vertical-sm;
 @input-padding-vertical-lg: @padding-vertical-lg;
-@input-placeholder-color: hsv(0, 0, 75%);
+@input-placeholder-color: #bfbfbf;
 // @input-color: fade(@text-color, 54%);
 @input-active-color: @text-color;
 @input-color: rgb(0, 0, 0);
@@ -414,9 +419,9 @@
 @table-header-sort-bg: @background-color-base;
 @table-row-hover-bg: @item-hover-bg;
 @table-current-row-bg: @item-active-bg;
-@table-cell-focus-bg: fade(#000, 8%);
-@table-selected-row-bg: fade(#a1c2fa, 16%);
-@table-expanded-row-bg: #fbfbfb;
+@table-cell-focus-bg: rgba(0, 0, 0, 0.08);
+@table-selected-row-bg: rgba(161, 194, 250, 0.16);
+@table-expanded-row-bg: rgba(161, 194, 250, 0.16);
 @table-mouse-batch-choose-bg: @table-selected-row-bg;
 @table-padding-vertical: 0.05rem;
 @table-padding-horizontal: @input-padding-horizontal;
@@ -431,7 +436,7 @@
 // Loader
 
 @loader-spin-ring-wide: 3px;
-@loader-spin-ring-color: fade(@primary-color, 80);
+@loader-spin-ring-color: rgba(63, 81, 181, 0.8);
 @loader-spin-ring-active-color: @B500;
 @loader-duration-normal: 0.6s;
 
@@ -570,18 +575,18 @@
 @slider-track-background-color-hover: @primary-7;
 @slider-handle-color: @primary-color;
 @slider-handle-color-hover: @primary-7;
-@slider-handle-color-focus: tint(@primary-color, 20%);
-@slider-handle-color-focus-shadow: tint(@primary-color, 50%);
+@slider-handle-color-focus: #6574c4;
+@slider-handle-color-focus-shadow: #9fa8da;
 @slider-handle-color-tooltip-open: @primary-color;
 @slider-dot-border-color: @border-color-split;
-@slider-dot-border-color-active: tint(@primary-color, 50%);
+@slider-dot-border-color-active: #9fa8da;
 @slider-disabled-color: @disabled-color;
 @slider-disabled-background-color: @component-background;
 
 //Ripple
 // ---
-@ripple-dark-color: fade(#000, 10%);
-@ripple-light-color: fade(#fff, 10%);
+@ripple-dark-color: rgba(0, 0, 0, 0.1);
+@ripple-light-color: rgba(255, 255, 255, 0.1);
 
 // CodeArea
 // ---
@@ -594,7 +599,7 @@
 // Skeleton
 // ---
 @skeleton-color: #f2f2f2;
-@skeleton-to-color: shade(@skeleton-color, 5%);
+@skeleton-to-color: #e6e6e6;
 
 // Collapse
 // ---
@@ -620,4 +625,3 @@
 @statistic-content-font-size: 24px;
 @statistic-unit-font-size: 16px;
 @statistic-font-family: @font-family;
-

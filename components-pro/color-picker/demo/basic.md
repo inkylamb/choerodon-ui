@@ -19,8 +19,8 @@ ColorPicker.
 import { ColorPicker } from 'choerodon-ui/pro';
 
 ReactDOM.render(
-  <ColorPicker defaultValue="#f1c7f2" />,
-  mountNode
+  <ColorPicker defaultValue="#000000" />,
+  mountNode,
 );
 
 ````

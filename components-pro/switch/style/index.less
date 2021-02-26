@@ -8,6 +8,7 @@
 .@{switch-prefix-cls} {
   &-wrapper {
     padding: 0.03rem;
+
     &.@{c7n-pro-prefix}-field {
       width: auto;
     }
@@ -26,6 +27,7 @@
     line-height: @switch-height - 0.06rem;
     background-color: rgba(0, 0, 0, 0.38);
     border-radius: @switch-height / 2;
+
     &::after {
       position: absolute;
       top: 0;
@@ -45,12 +47,12 @@
     }
   }
 
-  &:active + &-label::after {
+  &:active+&-label::after {
     width: @switch-height + 0.04rem;
   }
 
   &-focused &-label {
-    box-shadow: 0 0 0 0.02rem fade(@switch-color, 20%);
+    box-shadow: 0 0 0 0.02rem rgba(182, 191, 219, 0.2);
   }
 
   &-focused:hover &-label {
@@ -63,19 +65,22 @@
     vertical-align: middle;
   }
 
-  &:checked + &-label {
+  &:checked+&-label {
     padding: 0 @switch-height 0 0.05rem;
     background-color: @switch-color;
+
     &::after {
       left: 100%;
       margin-left: 0 - @switch-height;
       background-color: @switch-checked-color;
     }
   }
+
   &:disabled {
     cursor: not-allowed;
   }
-  &:disabled + &-label {
+
+  &:disabled+&-label {
     opacity: @switch-disabled-opacity;
   }
 
@@ -86,6 +91,7 @@
   &-sm &-label {
     min-width: 0.3rem;
     height: @switch-sm-height - 0.04rem;
+
     &::after {
       left: 0.01rem;
       width: @switch-sm-height;
@@ -93,7 +99,7 @@
     }
   }
 
-  &-sm &:checked + &-label::after {
+  &-sm &:checked+&-label::after {
     margin-left: -0.01rem - @switch-sm-height;
   }
 
@@ -104,13 +110,15 @@
   &-lg &-label {
     min-width: 0.4rem;
     height: @switch-lg-height - 0.04rem;
+
     &::after {
       left: 0.01rem;
       width: @switch-lg-height;
       height: @switch-lg-height;
     }
   }
-  &-lg &:checked + &-label::after {
+
+  &-lg &:checked+&-label::after {
     margin-left: 0.01rem - @switch-lg-height;
   }
 

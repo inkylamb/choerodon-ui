@@ -50,7 +50,6 @@
   "dependencies": {
     "@babel/runtime": "7.x",
     "@ctrl/tinycolor": "^3.2.0",
-    "@types/react-beautiful-dnd": "^13.0.0",
     "add-dom-event-listener": "1.x",
     "array-tree-filter": "^2.0.0",
     "async-validator": "1.x",
@@ -86,10 +85,8 @@
     "rc-editor-core": "~0.8.3",
     "rc-motion": "^2.4.1",
     "rc-virtual-list": "^3.2.6",
-    "react": ">=16.6.0",
     "react-beautiful-dnd": "^13.0.0",
     "react-codemirror2": "5.1.0",
-    "react-dom": ">=16.6.0",
     "react-easy-crop": "^3.1.0",
     "react-image-lightbox": "^4.6.0",
     "react-lazy-load": "^3.0.13",
@@ -102,7 +99,6 @@
     "string-template": "^1.0.0",
     "tslib": "^1.9.3",
     "warning": "~4.0.3",
-    "xhr-mock": "^2.5.1",
     "xlsx": "^0.16.7"
   },
   "devDependencies": {
@@ -251,7 +247,9 @@
     "webpack-filter-warnings-plugin": "^1.2.1",
     "webpack-merge": "^4.2.2",
     "webpackbar": "^4.0.0",
-    "xhr2": "^0.2.0"
+    "xhr2": "^0.2.0",
+    "xhr-mock": "^2.5.1",
+    "@types/react-beautiful-dnd": "^13.0.0"
   },
   "scripts": {
     "test": "jest --config .jest.js --no-cache --debug --coverage",
